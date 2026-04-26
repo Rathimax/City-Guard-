@@ -69,7 +69,8 @@ const MapModal = ({ isOpen, onClose }) => {
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 1000,
-            padding: '2rem'
+            zIndex: 1000,
+            padding: 'clamp(0.5rem, 4vw, 2rem)'
           }}
           onClick={onClose}
         >
@@ -77,13 +78,13 @@ const MapModal = ({ isOpen, onClose }) => {
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="glass"
+            className="glass map-modal-content"
             style={{
               width: '100%',
               maxWidth: '900px',
-              height: '80vh',
+              height: '85vh',
               background: 'var(--bg-primary)',
-              padding: '1.5rem',
+              padding: 'clamp(1rem, 4vw, 1.5rem)',
               position: 'relative',
               display: 'flex',
               flexDirection: 'column',
@@ -93,7 +94,7 @@ const MapModal = ({ isOpen, onClose }) => {
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="map-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <div style={{
                   background: 'var(--primary)',
@@ -103,12 +104,12 @@ const MapModal = ({ isOpen, onClose }) => {
                   <MapPin size={20} color="var(--primary-foreground)" />
                 </div>
                 <div>
-                  <h2 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-heading)' }}>Interactive City Map</h2>
-                  <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>View your current location and infrastructure</p>
+                  <h2 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-heading)' }} className="map-title">Interactive City Map</h2>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }} className="map-subtitle">View your current location</p>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <div className="map-controls" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                 <button
                   onClick={handleGetLocation}
                   className="btn btn-secondary"

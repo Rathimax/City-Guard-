@@ -393,4 +393,42 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 1rem !important;
     margin-bottom: 1rem !important;
   }
+
+  /* Map Modal Fixes */
+  .map-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 1rem !important;
+  }
+
+  .map-controls {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  .map-subtitle {
+    display: none !important;
+  }
+
+  /* Mayor Console Fixes */
+  .console-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
+
+  .issue-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+  }
+
+  .issue-row > div:last-child {
+    width: 100% !important;
+    text-align: left !important;
+    padding-top: 0.5rem !important;
+    border-top: 1px solid var(--glass-border) !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+  }
 }

@@ -148,7 +148,7 @@ const MayorConsole = () => {
         </div>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '2.5rem', alignItems: 'start' }}>
+      <div className="console-grid" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '2.5rem', alignItems: 'start' }}>
         {/* Left Side: Issue List */}
         <div className="glass" style={{ padding: '1.5rem', minHeight: '600px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
@@ -177,6 +177,7 @@ const MayorConsole = () => {
                   <div
                     key={issue._id}
                     onClick={() => handleSelectIssue(issue)}
+                    className="glass-hover issue-row"
                     style={{
                       padding: '1.25rem',
                       borderRadius: '16px',
@@ -187,9 +188,9 @@ const MayorConsole = () => {
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
-                      boxShadow: selectedIssue?._id === issue._id ? '0 8px 16px rgba(0,0,0,0.1)' : 'none'
+                      boxShadow: selectedIssue?._id === issue._id ? '0 8px 16px rgba(0,0,0,0.1)' : 'none',
+                      gap: '1rem'
                     }}
-                    className="glass-hover"
                   >
                     <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                       <div style={{
