@@ -54,7 +54,7 @@ const IssueCard = ({ issue, onVoteUpdate, showVotes = true }) => {
   const urgencyStyles = getUrgencyStyles(issue.urgency || 'Normal');
 
   return (
-    <div className="glass" style={{
+    <div className="glass issue-card" style={{
       borderRadius: '24px',
       overflow: 'hidden',
       height: '100%',
@@ -117,7 +117,7 @@ const IssueCard = ({ issue, onVoteUpdate, showVotes = true }) => {
         </div>
       )}
 
-      <div style={{ position: 'relative', height: '160px' }}>
+      <div className="issue-card-image-content" style={{ position: 'relative', height: '160px' }}>
         <img
           src={issue.image || issue.photoUrl}
           alt={issue.title || 'City Issue'}
@@ -191,14 +191,14 @@ const IssueCard = ({ issue, onVoteUpdate, showVotes = true }) => {
         </div>
       </div>
 
-      <div style={{ padding: '1.25rem', paddingLeft: showVotes ? '3.25rem' : '1.25rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div className="issue-card-body" style={{ padding: '1.25rem', paddingLeft: showVotes ? '3.25rem' : '1.25rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-          <h3 style={{ fontSize: '1.1rem', fontFamily: 'var(--font-heading)', lineHeight: 1.2 }}>
+          <h3 className="issue-card-title" style={{ fontSize: '1.1rem', fontFamily: 'var(--font-heading)', lineHeight: 1.2 }}>
             {issue.title || (issue.issueDescription?.includes(':') ? issue.issueDescription.split(':')[0] : 'City Issue')}
           </h3>
         </div>
 
-        <p style={{
+        <p className="issue-card-description" style={{
           color: 'var(--text-secondary)',
           fontSize: '0.85rem',
           lineHeight: '1.5',
@@ -213,7 +213,7 @@ const IssueCard = ({ issue, onVoteUpdate, showVotes = true }) => {
         </p>
 
         {issue.mayorCommands && (
-          <div style={{
+          <div className="issue-card-instruction" style={{
             background: 'rgba(var(--primary-rgb), 0.05)',
             borderLeft: '3px solid var(--primary)',
             padding: '0.75rem',
@@ -226,7 +226,7 @@ const IssueCard = ({ issue, onVoteUpdate, showVotes = true }) => {
           </div>
         )}
 
-        <div style={{
+        <div className="issue-card-footer" style={{
           display: 'flex',
           flexDirection: 'column',
           gap: '8px',
@@ -234,7 +234,7 @@ const IssueCard = ({ issue, onVoteUpdate, showVotes = true }) => {
           borderTop: '1px solid var(--glass-border)',
           fontSize: '0.75rem'
         }}>
-          <div style={{ 
+          <div className="issue-card-reporter" style={{ 
             display: 'flex', 
             alignItems: 'center', 
             gap: '8px', 

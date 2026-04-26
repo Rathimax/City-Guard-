@@ -464,4 +464,41 @@ h1, h2, h3, h4, h5, h6 {
   .console-subtitle {
     font-size: 0.875rem !important;
   }
+
+  /* Compact Issue Cards for Mobile */
+  .issue-card-image-content {
+    height: 130px !important;
+  }
+
+  .issue-card-body {
+    padding: 0.85rem !important;
+    padding-left: 2.85rem !important; /* Adjusted for vote sidebar */
+  }
+
+  .issue-card-title {
+    font-size: 0.95rem !important;
+    margin-bottom: 0.4rem !important;
+  }
+
+  .issue-card-description {
+    font-size: 0.75rem !important;
+    margin-bottom: 0.75rem !important;
+    -webkit-line-clamp: 2 !important;
+  }
+
+  .issue-card-instruction {
+    padding: 0.5rem 0.6rem !important;
+    margin-bottom: 0.85rem !important;
+    font-size: 0.7rem !important;
+  }
+
+  .issue-card-footer {
+    padding-top: 0.75rem !important;
+    font-size: 0.7rem !important;
+  }
+
+  .issue-card-reporter {
+    padding: 2px 8px !important;
+    font-size: 0.65rem !important;
+  }
 }
