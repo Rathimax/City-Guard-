@@ -333,7 +333,8 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .container {
-    padding: 0 1rem !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
   }
 
   .section-title {
@@ -430,5 +431,9 @@ h1, h2, h3, h4, h5, h6 {
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
+  }
+
+  .mayor-console-container {
+    padding-top: 5rem !important;
   }
 }

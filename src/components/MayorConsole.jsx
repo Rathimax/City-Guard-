@@ -135,7 +135,7 @@ const MayorConsole = () => {
   };
 
   return (
-    <div className="container" style={{ paddingTop: '8rem', paddingBottom: '4rem' }}>
+    <div className="container mayor-console-container" style={{ paddingTop: '8rem', paddingBottom: '4rem' }}>
       <header style={{ marginBottom: '3rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
           <div style={{ background: 'var(--primary)', padding: '10px', borderRadius: '12px' }}>
