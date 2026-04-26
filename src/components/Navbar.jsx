@@ -66,7 +66,7 @@ const Navbar = () => {
             }}>
               <Shield size={24} color="var(--primary-foreground)" />
             </div>
-            <span style={{
+            <span className="logo-text" style={{
               fontFamily: 'var(--font-heading)',
               fontSize: '1.25rem',
               fontWeight: 800,
@@ -78,8 +78,8 @@ const Navbar = () => {
           </Link>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-          <div style={{ display: 'flex', gap: '1.5rem', color: 'var(--muted-foreground)', fontWeight: 500, alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(0.5rem, 4vw, 2rem)' }}>
+          <div className="nav-links" style={{ display: 'flex', gap: '1.5rem', color: 'var(--muted-foreground)', fontWeight: 500, alignItems: 'center' }}>
             <Link to="/" style={{ color: 'var(--foreground)', textDecoration: 'none' }}>Dashboard</Link>
             <button
               onClick={() => setIsMapOpen(true)}
@@ -128,7 +128,13 @@ const Navbar = () => {
             )}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', borderLeft: '1px solid var(--border)', paddingLeft: '1.5rem' }}>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 'clamp(0.5rem, 3vw, 1rem)', 
+            borderLeft: '1px solid var(--border)', 
+            paddingLeft: 'clamp(0.5rem, 3vw, 1.5rem)' 
+          }}>
             <button
               onClick={toggleTheme}
               style={{
