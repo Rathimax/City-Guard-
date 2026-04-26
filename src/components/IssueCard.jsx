@@ -27,7 +27,7 @@ const IssueCard = ({ issue, onVoteUpdate, showVotes = true }) => {
 
     setIsVoting(true);
     try {
-      const response = await fetch(`http://localhost:5001/api/issues/${issue.id}/vote`, {
+      const response = await fetch(`https://city-guard-backend.onrender.com/api/issues/${issue.id}/vote`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: currentUser.uid, type })

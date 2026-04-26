@@ -89,7 +89,7 @@ const LiveInsights = () => {
 
   const fetchRealData = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/issues');
+      const response = await fetch('https://city-guard-backend.onrender.com/api/issues');
       if (response.ok) {
         const data = await response.json();
         

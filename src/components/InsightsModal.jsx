@@ -32,7 +32,7 @@ const InsightsModal = ({ isOpen, onClose }) => {
   const fetchIssues = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5001/api/issues');
+      const response = await fetch('https://city-guard-backend.onrender.com/api/issues');
       if (response.ok) {
         const data = await response.json();
         setIssues(data);

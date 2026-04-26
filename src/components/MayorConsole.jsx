@@ -66,7 +66,7 @@ const MayorConsole = () => {
 
   const fetchIssues = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/issues');
+      const response = await fetch('https://city-guard-backend.onrender.com/api/issues');
       if (response.ok) {
         const data = await response.json();
         setIssues(data);
@@ -94,7 +94,7 @@ const MayorConsole = () => {
     e.preventDefault();
     setUpdateLoading(true);
     try {
-      const response = await fetch(`http://localhost:5001/api/issues/${selectedIssue._id}/status`, {
+      const response = await fetch(`https://city-guard-backend.onrender.com/api/issues/${selectedIssue._id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
