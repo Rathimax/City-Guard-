@@ -1,0 +1,17 @@
+/* App-specific styles */
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+  padding-bottom: 4rem;
+}
+
+@media (max-width: 1024px) {
+  .split-layout {
+    grid-template-columns: 1fr !important;
+  }
+}

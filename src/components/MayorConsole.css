@@ -1,0 +1,204 @@
+.command-panel {
+  padding: 2rem;
+  border: 1px solid var(--primary);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+  position: sticky;
+  top: 8rem;
+}
+
+.report-details-box {
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: 1.5rem;
+}
+
+.report-tag-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.urgency-tag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  borderRadius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.confidential-tag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--primary);
+  background: rgba(255, 153, 204, 0.1);
+  padding: 4px 10px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 153, 204, 0.2);
+  letter-spacing: 0.05em;
+}
+
+.report-meta {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.security-wall {
+  padding: 3rem 2rem;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.02) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1.25rem;
+  box-shadow: inset 0 0 20px rgba(16, 185, 129, 0.05);
+}
+
+.security-icon-outer {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: var(--success);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+  transform: rotate(-5deg);
+  transition: transform 0.3s ease;
+}
+
+.security-wall:hover .security-icon-outer {
+  transform: rotate(0deg) scale(1.05);
+}
+
+.override-warning {
+  padding: 1rem;
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.05) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #ef4444;
+  font-size: 0.85rem;
+  font-weight: 500;
+  animation: pulse-border 2s infinite;
+}
+
+@keyframes pulse-border {
+  0% { border-color: rgba(239, 68, 68, 0.3); }
+  50% { border-color: rgba(239, 68, 68, 0.6); }
+  100% { border-color: rgba(239, 68, 68, 0.3); }
+}
+
+.console-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.dispatch-btn {
+  width: 100%;
+  justify-content: center;
+  padding: 1.25rem;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.dispatch-btn:not(:disabled):hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(var(--primary-rgb), 0.4);
+}
+
+.dispatch-btn:active {
+  transform: translateY(-1px);
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 2rem;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(12px);
+  z-index: -1;
+}
+
+.success-popup {
+  width: 100%;
+  max-width: 450px;
+  background: var(--card); /* Adapts to light/dark automatically */
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  padding: 3rem 2.5rem;
+  z-index: 101;
+  text-align: center;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  position: relative;
+  transition: background-color 0.5s ease, border-color 0.5s ease;
+}
+
+.dark .success-popup {
+  background: #0f172a; /* Premium dark slate for dark mode */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.8);
+}
+
+.success-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  background: var(--success);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.4);
+  animation: scale-in-out 0.5s ease-out;
+}
+
+@keyframes scale-in-out {
+  0% { transform: scale(0.5); opacity: 0; }
+  70% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
