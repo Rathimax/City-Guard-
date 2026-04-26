@@ -44,13 +44,13 @@ const Hero = () => {
         centerText="Your city is your responsibility"
       >
         <div className='max-w-4xl mx-auto'>
-          <h2 className='text-3xl font-bold mb-6 text-foreground'>
+          <h2 className='about-title text-3xl font-bold mb-6 text-foreground'>
             About CityGuard
           </h2>
-          <p className='text-lg mb-8 text-muted-foreground leading-relaxed'>
+          <p className='about-text text-lg mb-8 text-muted-foreground leading-relaxed'>
             {photoContent.about.overview}
           </p>
-          <p className='text-lg mb-8 text-muted-foreground leading-relaxed'>
+          <p className='about-text text-lg mb-8 text-muted-foreground leading-relaxed'>
             {photoContent.about.conclusion}
           </p>
         </div>

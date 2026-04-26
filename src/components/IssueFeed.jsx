@@ -84,8 +84,8 @@ const IssueFeed = () => {
     return (
       <div style={{ marginBottom: '4rem' }}>
         <div style={{ marginBottom: '2.5rem' }}>
-          <h3 style={{ fontSize: '1.75rem', fontFamily: 'var(--font-heading)', color: 'var(--foreground)' }}>{title}</h3>
-          <p style={{ color: 'var(--text-secondary)' }}>{description}</p>
+          <h3 className="grid-title" style={{ fontSize: '1.75rem', fontFamily: 'var(--font-heading)', color: 'var(--foreground)' }}>{title}</h3>
+          <p className="grid-subtitle" style={{ color: 'var(--text-secondary)' }}>{description}</p>
         </div>
 
         <div style={{
@@ -162,8 +162,8 @@ const IssueFeed = () => {
     <section className="container" id="community-feed" style={{ paddingTop: '4rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4rem' }}>
         <div>
-          <h2 style={{ fontSize: '3rem', fontFamily: 'var(--font-heading)', marginBottom: '0.5rem' }}>Community Board</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>Prioritizing city issues through crowdsourced community feedback.</p>
+          <h2 className="feed-title" style={{ fontSize: '3rem', fontFamily: 'var(--font-heading)', marginBottom: '0.5rem' }}>Community Board</h2>
+          <p className="feed-subtitle" style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>Prioritizing city issues through crowdsourced community feedback.</p>
         </div>
         {isLoading && <Loader2 className="animate-spin" size={24} color="var(--primary)" />}
       </div>
