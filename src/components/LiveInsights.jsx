@@ -177,7 +177,7 @@ const LiveInsights = () => {
             <Loader2 className="animate-spin" size={32} color="var(--primary)" />
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="stat-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <StatCard icon={Activity} label="Active" value={stats.active} color="255, 192, 203" />
             <StatCard icon={CheckCircle} label="Resolved" value={stats.resolved} color="34, 197, 94" />
             <StatCard icon={Users} label="Contributors" value={stats.contributors} color="135, 206, 235" />
