@@ -52,9 +52,9 @@ const Navbar = () => {
         zIndex: 100,
         color: 'var(--foreground)'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div className="logo-group" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none', color: 'inherit' }}>
-            <div style={{
+            <div className="logo-icon-container" style={{
               background: 'var(--primary)',
               width: '40px',
               height: '40px',
@@ -78,7 +78,7 @@ const Navbar = () => {
           </Link>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(0.5rem, 4vw, 2rem)' }}>
+        <div className="nav-right-section" style={{ display: 'flex', alignItems: 'center', gap: 'clamp(0.5rem, 4vw, 2rem)' }}>
           <div className="nav-links" style={{ display: 'flex', gap: '1.5rem', color: 'var(--muted-foreground)', fontWeight: 500, alignItems: 'center' }}>
             <Link to="/" style={{ color: 'var(--foreground)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <LayoutDashboard size={20} className="md:size-[18px]" />

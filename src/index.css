@@ -313,7 +313,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Mobile Responsiveness Fixes */
 @media (max-width: 768px) {
   .liquid-glass {
-    padding: 0.75rem 1rem !important;
+    padding: 0.6rem 0.75rem !important;
     top: 1rem !important;
     left: 1rem !important;
     right: 1rem !important;
@@ -321,7 +321,7 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .nav-links {
-    gap: 0.75rem !important; 
+    gap: clamp(0.4rem, 2vw, 0.75rem) !important; 
   }
 
   .nav-text {
@@ -329,7 +329,27 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .logo-text {
-    font-size: 1rem !important;
+    font-size: 0.9rem !important;
+    letter-spacing: -0.2px !important;
+  }
+
+  .logo-icon-container {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 8px !important;
+  }
+
+  .logo-icon-container svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .logo-group {
+    gap: 0.4rem !important;
+  }
+
+  .nav-right-section {
+    gap: 0.5rem !important;
   }
 
   .container {
