@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Bell, User, Sun, Moon, Map as MapIcon, LogOut, LayoutDashboard } from 'lucide-react';
+import { Shield, Bell, User, Sun, Moon, Map as MapIcon, LogOut, LayoutDashboard, Activity } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import MapModal from './MapModal';
@@ -80,7 +80,10 @@ const Navbar = () => {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(0.5rem, 4vw, 2rem)' }}>
           <div className="nav-links" style={{ display: 'flex', gap: '1.5rem', color: 'var(--muted-foreground)', fontWeight: 500, alignItems: 'center' }}>
-            <Link to="/" style={{ color: 'var(--foreground)', textDecoration: 'none' }}>Dashboard</Link>
+            <Link to="/" style={{ color: 'var(--foreground)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <LayoutDashboard size={20} className="md:size-[18px]" />
+              <span className="nav-text">Dashboard</span>
+            </Link>
             <button
               onClick={() => setIsMapOpen(true)}
               style={{
@@ -92,10 +95,14 @@ const Navbar = () => {
                 fontFamily: 'inherit',
                 fontSize: 'inherit',
                 fontWeight: 'inherit',
-                padding: 0
+                padding: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
               }}
             >
-              Map
+              <MapIcon size={20} className="md:size-[18px]" />
+              <span className="nav-text">Map</span>
             </button>
             <button
               onClick={() => setIsInsightsOpen(true)}
@@ -108,10 +115,14 @@ const Navbar = () => {
                 fontFamily: 'inherit',
                 fontSize: 'inherit',
                 fontWeight: 'inherit',
-                padding: 0
+                padding: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
               }}
             >
-              Insights
+              <Activity size={20} className="md:size-[18px]" />
+              <span className="nav-text">Insights</span>
             </button>
             {isMayor && (
               <Link to="/mayor-console" style={{
@@ -122,8 +133,8 @@ const Navbar = () => {
                 gap: '0.5rem',
                 fontWeight: 600
               }}>
-                <LayoutDashboard size={18} />
-                Console
+                <Shield size={20} className="md:size-[18px]" />
+                <span className="nav-text">Console</span>
               </Link>
             )}
           </div>
