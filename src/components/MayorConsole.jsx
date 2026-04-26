@@ -142,8 +142,8 @@ const MayorConsole = () => {
             <Shield size={32} color="var(--primary-foreground)" />
           </div>
           <div>
-            <h1 style={{ fontSize: '2.5rem', fontFamily: 'var(--font-heading)' }}>Mayor's Command Console</h1>
-            <p style={{ color: 'var(--text-secondary)' }}>Strategic oversight and resource allocation for urban infrastructure.</p>
+            <h1 className="console-title" style={{ fontSize: '2.5rem', fontFamily: 'var(--font-heading)' }}>Mayor's Command Console</h1>
+            <p className="console-subtitle" style={{ color: 'var(--text-secondary)' }}>Strategic oversight and resource allocation for urban infrastructure.</p>
           </div>
         </div>
       </header>

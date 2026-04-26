@@ -436,4 +436,12 @@ h1, h2, h3, h4, h5, h6 {
   .mayor-console-container {
     padding-top: 5rem !important;
   }
+
+  .console-title {
+    font-size: 1.75rem !important;
+  }
+
+  .console-subtitle {
+    font-size: 0.875rem !important;
+  }
 }
