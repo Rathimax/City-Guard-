@@ -84,7 +84,7 @@ cd server
 npm run dev
 ```
 
-The application should now be running! The frontend runs on `http://localhost:5173` (or similar) and communicates with the backend API on port `5001`.
+The application should now be running! The frontend runs on `http://localhost:XXXX` (or similar) and communicates with the backend API on port `XXXX`.
 
 ---
 

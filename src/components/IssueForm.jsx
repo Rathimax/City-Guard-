@@ -191,7 +191,7 @@ const IssueForm = () => {
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
-            <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+            <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '2rem' }}>
               {/* Left Column: Form Details */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div style={{ display: 'none' }}>
@@ -207,39 +207,80 @@ const IssueForm = () => {
                 </div>
 
                 <div style={{
-                  padding: '1rem',
+                  padding: '1.25rem',
                   background: 'var(--bg-secondary)',
-                  borderRadius: '10px',
+                  borderRadius: '16px',
                   border: '1px solid var(--border)',
-                  fontSize: '0.875rem',
                   display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '0.75rem'
+                  flexDirection: 'column',
+                  gap: '1rem',
+                  boxShadow: 'inset 0 0 20px rgba(0,0,0,0.02)'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: isAnonymous ? '#94a3b8' : '#22c55e' }}></div>
-                    <span style={{ color: 'var(--text-secondary)' }}>Reporting as:</span>
-                    <span style={{ fontWeight: 600 }}>{isAnonymous ? 'Anonymous citizen' : userName}</span>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between',
+                    width: '100%'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div style={{ 
+                        width: '10px', 
+                        height: '10px', 
+                        borderRadius: '50%', 
+                        background: isAnonymous ? '#94a3b8' : '#22c55e',
+                        boxShadow: isAnonymous ? 'none' : '0 0 10px rgba(34, 197, 94, 0.4)'
+                      }}></div>
+                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', fontWeight: 500 }}>Privacy Mode:</span>
+                    </div>
+
+                    <div 
+                      onClick={() => setIsAnonymous(!isAnonymous)}
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '0.5rem', 
+                        cursor: 'pointer',
+                        padding: '0.5rem 1rem',
+                        borderRadius: '10px',
+                        background: isAnonymous ? 'rgba(var(--primary-rgb, 108, 92, 231), 0.15)' : 'var(--bg-primary)',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        border: '1px solid',
+                        borderColor: isAnonymous ? 'var(--primary)' : 'var(--border)',
+                        userSelect: 'none'
+                      }}
+                      className="glass-hover"
+                    >
+                      <Shield size={16} color={isAnonymous ? 'var(--primary)' : 'var(--text-secondary)'} />
+                      <span style={{ 
+                        fontSize: '0.75rem', 
+                        fontWeight: 700, 
+                        color: isAnonymous ? 'var(--primary)' : 'var(--text-primary)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px'
+                      }}>
+                        {isAnonymous ? 'Anonymous' : 'Public'}
+                      </span>
+                    </div>
                   </div>
-                  
-                  <div 
-                    onClick={() => setIsAnonymous(!isAnonymous)}
-                    style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '0.5rem', 
-                      cursor: 'pointer',
-                      padding: '4px 8px',
-                      borderRadius: '6px',
-                      background: isAnonymous ? 'var(--primary-muted, rgba(var(--primary-rgb), 0.1))' : 'transparent',
-                      transition: 'var(--transition-smooth)',
-                      border: isAnonymous ? '1px solid var(--primary-border)' : '1px solid transparent'
-                    }}
-                  >
-                    <Shield size={14} color={isAnonymous ? 'var(--primary)' : 'var(--text-secondary)'} />
-                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: isAnonymous ? 'var(--primary)' : 'var(--text-secondary)' }}>
-                      {isAnonymous ? 'Anonymous' : 'Public'}
+
+                  <div style={{ 
+                    padding: '1rem',
+                    background: 'var(--bg-primary)',
+                    borderRadius: '12px',
+                    border: '1px solid var(--glass-border)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.15rem'
+                  }}>
+                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Reporting as</span>
+                    <span style={{ 
+                      fontSize: '1rem', 
+                      fontWeight: 700, 
+                      color: 'var(--text-primary)',
+                      display: 'block',
+                      wordBreak: 'break-word'
+                    }}>
+                      {isAnonymous ? 'Anonymous Citizen' : (userName || 'Community Member')}
                     </span>
                   </div>
                 </div>

@@ -1,38 +1,82 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Bell, Info, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
 
-const mockNotifications = [
-  {
-    id: 1,
-    title: "Pothole Update",
-    message: "Report #1042 on MG Road has been marked as 'Under Repair'.",
-    time: "2 mins ago",
-    type: "update",
-    icon: <Clock size={16} color="var(--primary)" />,
-    unread: true
-  },
-  {
-    id: 2,
-    title: "Major Infrastructure Alert",
-    message: "Scheduled water maintenance in Zone 4 this Sunday.",
-    time: "1 hour ago",
-    type: "alert",
-    icon: <AlertTriangle size={16} color="#ef4444" />,
-    unread: true
-  },
-  {
-    id: 3,
-    title: "Thank You!",
-    message: "Your report for 'Broken Street Light' helped the city team.",
-    time: "5 hours ago",
-    type: "info",
-    icon: <CheckCircle2 size={16} color="#10b981" />,
-    unread: false
-  }
-];
+const NotificationDropdown = ({ isOpen, onClose, onOpenInsights }) => {
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-const NotificationDropdown = ({ isOpen, onClose }) => {
+  useEffect(() => {
+    if (isOpen) {
+      fetchIssues();
+    }
+  }, [isOpen]);
+
+  const fetchIssues = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('https://city-guard-backend.onrender.com/api/issues');
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Sort by createdAt descending and take top 5 recent issues
+        const recentIssues = data
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+          .slice(0, 5);
+        
+        const formattedNotifications = recentIssues.map(issue => {
+          let icon = <Info size={16} color="var(--primary)" />;
+          let type = "info";
+          
+          if (issue.status === 'Resolved') {
+            icon = <CheckCircle2 size={16} color="#10b981" />;
+            type = "resolved";
+          } else if (issue.severity === 'High') {
+            icon = <AlertTriangle size={16} color="#ef4444" />;
+            type = "alert";
+          } else {
+            icon = <Clock size={16} color="#f59e0b" />;
+            type = "pending";
+          }
+
+          // Calculate time ago
+          const now = new Date();
+          const issueDate = new Date(issue.createdAt);
+          const diffInHours = Math.abs(now - issueDate) / 36e5;
+          let timeString = '';
+          if (diffInHours < 1) {
+            const mins = Math.max(1, Math.floor(diffInHours * 60));
+            timeString = `${mins} mins ago`;
+          } else if (diffInHours < 24) {
+            timeString = `${Math.floor(diffInHours)} hours ago`;
+          } else {
+            timeString = `${Math.floor(diffInHours / 24)} days ago`;
+          }
+
+          const desc = issue.issueDescription || "New Report";
+          const shortDesc = desc.length > 50 ? desc.substring(0, 50) + '...' : desc;
+          const statusStr = issue.status || 'Pending';
+
+          return {
+            id: issue._id,
+            title: `Report Update`,
+            message: `${shortDesc} - Status: ${statusStr}`,
+            time: timeString,
+            type,
+            icon,
+            unread: true
+          };
+        });
+        
+        setNotifications(formattedNotifications);
+      }
+    } catch (err) {
+      console.error('Failed to fetch notifications:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -69,8 +113,12 @@ const NotificationDropdown = ({ isOpen, onClose }) => {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        {mockNotifications.length > 0 ? (
-          mockNotifications.map((n) => (
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '2rem' }}>
+            <div className="loader" style={{ width: '24px', height: '24px', margin: '0 auto' }}></div>
+          </div>
+        ) : notifications.length > 0 ? (
+          notifications.map((n) => (
             <div
               key={n.id}
               className="glass-hover"
@@ -126,6 +174,7 @@ const NotificationDropdown = ({ isOpen, onClose }) => {
       </div>
 
       <button
+        onClick={onOpenInsights}
         style={{
           width: '100%',
           marginTop: '1rem',
@@ -138,6 +187,7 @@ const NotificationDropdown = ({ isOpen, onClose }) => {
           fontWeight: 600,
           cursor: 'pointer'
         }}
+        className="glass-hover"
       >
         View all history
       </button>

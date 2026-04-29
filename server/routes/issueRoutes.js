@@ -112,4 +112,66 @@ router.patch('/:id/vote', async (req, res) => {
   }
 });
 
+// @route   POST /api/issues/:id/comments
+// @desc    Add a comment to an issue
+router.post('/:id/comments', async (req, res) => {
+  try {
+    const { userId, userName, text, isAnonymous } = req.body;
+    if (!userId || !userName || !text) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    const issue = await Issue.findById(req.params.id);
+    if (!issue) {
+      return res.status(404).json({ message: 'Issue not found' });
+    }
+
+    const newComment = {
+      userId,
+      userName: isAnonymous ? 'Anonymous' : userName,
+      text,
+      isAnonymous: isAnonymous === true || isAnonymous === 'true'
+    };
+
+    issue.comments.push(newComment);
+    const savedIssue = await issue.save();
+    res.status(201).json(savedIssue);
+  } catch (error) {
+    console.error('Comment error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// @route   DELETE /api/issues/:id/comments/:commentId
+// @desc    Delete a comment
+router.delete('/:id/comments/:commentId', async (req, res) => {
+  try {
+    const { userId } = req.body; // Need userId to verify ownership
+    if (!userId) {
+      return res.status(400).json({ message: 'User ID is required' });
+    }
+
+    const issue = await Issue.findById(req.params.id);
+    if (!issue) {
+      return res.status(404).json({ message: 'Issue not found' });
+    }
+
+    const commentIndex = issue.comments.findIndex(c => c._id.toString() === req.params.commentId);
+    if (commentIndex === -1) {
+      return res.status(404).json({ message: 'Comment not found' });
+    }
+
+    if (issue.comments[commentIndex].userId !== userId) {
+      return res.status(403).json({ message: 'Unauthorized to delete this comment' });
+    }
+
+    issue.comments.splice(commentIndex, 1);
+    const savedIssue = await issue.save();
+    res.json(savedIssue);
+  } catch (error) {
+    console.error('Delete comment error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 export default router;

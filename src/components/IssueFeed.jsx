@@ -8,6 +8,7 @@ const IssueFeed = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showAllActive, setShowAllActive] = useState(false);
   const [showAllResolved, setShowAllResolved] = useState(false);
+  const [activeTab, setActiveTab] = useState('active');
 
   useEffect(() => {
     const fetchIssues = async () => {
@@ -31,6 +32,8 @@ const IssueFeed = () => {
               assignedTo: issue.assignedTo,
               mayorCommands: issue.mayorCommands,
               voteScore: issue.voteScore || 0,
+              upvotes: issue.upvotes || 0,
+              downvotes: issue.downvotes || 0,
               voters: issue.voters || [],
               urgency: issue.urgency || 'Normal',
               isAnonymous: issue.isAnonymous || false,
@@ -38,6 +41,7 @@ const IssueFeed = () => {
               location: issue.location?.coordinates?.length >= 2
                 ? `${issue.location.coordinates[1].toFixed(4)}, ${issue.location.coordinates[0].toFixed(4)}`
                 : 'Location Pending',
+              comments: issue.comments || [],
               time: issue.createdAt
                 ? new Date(issue.createdAt).toLocaleDateString(undefined, {
                   month: 'short',
@@ -71,6 +75,8 @@ const IssueFeed = () => {
         ? {
           ...issue,
           voteScore: updatedIssue.voteScore,
+          upvotes: updatedIssue.upvotes,
+          downvotes: updatedIssue.downvotes,
           voters: updatedIssue.voters
         }
         : issue
@@ -82,7 +88,7 @@ const IssueFeed = () => {
     const hasMore = issueList.length > 3;
 
     return (
-      <div style={{ marginBottom: '4rem' }}>
+      <div style={{ marginBottom: '2rem' }}>
         <div style={{ marginBottom: '2.5rem' }}>
           <h3 className="grid-title" style={{ fontSize: '1.75rem', fontFamily: 'var(--font-heading)', color: 'var(--foreground)' }}>{title}</h3>
           <p className="grid-subtitle" style={{ color: 'var(--text-secondary)' }}>{description}</p>
@@ -93,7 +99,7 @@ const IssueFeed = () => {
           gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
           gap: '2rem'
         }}>
-          <AnimatePresence mode="popLayout">
+          <AnimatePresence initial={false} mode="popLayout">
             {displayedIssues.map((issue, index) => (
               <motion.div
                 key={issue.id}
@@ -110,7 +116,7 @@ const IssueFeed = () => {
         </div>
 
         {hasMore && (
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '3rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1.5rem' }}>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -168,15 +174,74 @@ const IssueFeed = () => {
         {isLoading && <Loader2 className="animate-spin" size={24} color="var(--primary)" />}
       </div>
 
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '3rem' }}>
+        <div style={{ 
+          background: 'rgba(255, 255, 255, 0.03)', 
+          backdropFilter: 'blur(10px)',
+          padding: '6px', 
+          borderRadius: '16px', 
+          border: '1px solid var(--glass-border)',
+          display: 'flex',
+          gap: '4px'
+        }}>
+          {[
+            { id: 'active', label: 'Active Reports', count: activeIssues.length },
+            { id: 'resolved', label: 'Resolved Cases', count: resolvedIssues.length }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                padding: '10px 24px',
+                borderRadius: '12px',
+                border: 'none',
+                background: activeTab === tab.id ? '#f9f9f9' : 'transparent',
+                color: activeTab === tab.id ? '#000000' : 'var(--text-secondary)',
+                boxShadow: activeTab === tab.id ? '0 4px 12px rgba(0,0,0,0.1)' : 'none',
+                cursor: 'pointer',
+                fontSize: '0.95rem',
+                fontWeight: 600,
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              {tab.label}
+              <span style={{ 
+                fontSize: '0.75rem', 
+                opacity: activeTab === tab.id ? 0.8 : 0.6, 
+                background: activeTab === tab.id ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.05)',
+                color: activeTab === tab.id ? '#000000' : 'inherit',
+                padding: '2px 8px',
+                borderRadius: '6px'
+              }}>
+                {tab.count}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {isLoading && issues.length === 0 ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '6rem' }}>
           <Loader2 className="animate-spin" size={64} color="var(--primary)" />
         </div>
       ) : (
-        <>
-          {renderGrid("Active Reports", "Ongoing and pending issues sorted by community priority.", activeIssues, showAllActive, setShowAllActive)}
-          {renderGrid("Resolved Cases", "Successfully addressed city problems from the archive.", resolvedIssues, showAllResolved, setShowAllResolved, false)}
-        </>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+          >
+            {activeTab === 'active' 
+              ? renderGrid("Active Reports", "Ongoing and pending issues sorted by community priority.", activeIssues, showAllActive, setShowAllActive)
+              : renderGrid("Resolved Cases", "Successfully addressed city problems from the archive.", resolvedIssues, showAllResolved, setShowAllResolved, false)
+            }
+          </motion.div>
+        </AnimatePresence>
       )}
     </section>
   );

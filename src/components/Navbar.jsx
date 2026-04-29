@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Shield, Bell, User, Sun, Moon, Map as MapIcon, LogOut, LayoutDashboard, Activity } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
@@ -13,13 +13,31 @@ const Navbar = () => {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isInsightsOpen, setIsInsightsOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(document.documentElement.classList.contains('dark'));
   const [unreadCount, setUnreadCount] = useState(2);
+  const notificationRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setIsNotificationsOpen(false);
+      }
+    };
+
+    if (isNotificationsOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isNotificationsOpen]);
 
   const { currentUser, logout, isMayor } = useAuth();
   const navigate = useNavigate();
 
   const toggleTheme = () => {
-    document.documentElement.classList.toggle('dark');
+    const isDark = document.documentElement.classList.toggle('dark');
+    setIsDarkMode(isDark);
   };
 
   const handleToggleNotifications = () => {
@@ -148,22 +166,26 @@ const Navbar = () => {
           }}>
             <button
               onClick={toggleTheme}
+              className="theme-toggle-btn"
               style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--muted-foreground)',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid var(--glass-border)',
+                color: 'var(--foreground)',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: 0
+                width: '40px',
+                height: '40px',
+                borderRadius: '12px',
+                transition: 'all 0.3s ease',
+                backdropFilter: 'blur(8px)'
               }}
             >
-              <Sun className="dark:hidden" size={20} />
-              <Moon className="hidden dark:block" size={20} />
+              {isDarkMode ? <Moon size={20} /> : <Sun size={20} />}
             </button>
 
-            <div style={{ position: 'relative' }}>
+            <div ref={notificationRef} style={{ position: 'relative' }}>
               <button
                 onClick={handleToggleNotifications}
                 style={{
@@ -201,6 +223,10 @@ const Navbar = () => {
                   <NotificationDropdown
                     isOpen={isNotificationsOpen}
                     onClose={() => setIsNotificationsOpen(false)}
+                    onOpenInsights={() => {
+                      setIsNotificationsOpen(false);
+                      setIsInsightsOpen(true);
+                    }}
                   />
                 )}
               </AnimatePresence>
