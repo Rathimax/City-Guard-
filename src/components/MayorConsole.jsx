@@ -29,7 +29,8 @@ import {
   ChevronUp,
   Lock,
   Unlock,
-  AlertTriangle
+  AlertTriangle,
+  Mic
 } from 'lucide-react';
 import './MayorConsole.css';
 
@@ -374,6 +375,48 @@ const MayorConsole = () => {
                   <span>Reported by: <strong>{selectedIssue.userName}</strong></span>
                   {selectedIssue.isAnonymous && <span style={{ fontSize: '0.7rem', fontStyle: 'italic' }}>(Identity hidden)</span>}
                 </div>
+
+                {/* Audio Player for Voice Notes */}
+                {selectedIssue.audioUrl && (
+                  <div style={{
+                    marginTop: '1rem',
+                    padding: '1rem 1.25rem',
+                    background: 'rgba(var(--primary-rgb), 0.06)',
+                    border: '1px solid rgba(var(--primary-rgb), 0.15)',
+                    borderRadius: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1rem'
+                  }}>
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '50%',
+                      background: 'var(--primary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}>
+                      <Mic size={18} color="white" />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <p style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        color: 'var(--primary)',
+                        margin: '0 0 6px 0',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em'
+                      }}>Citizen Voice Note</p>
+                      <audio
+                        controls
+                        src={selectedIssue.audioUrl}
+                        style={{ width: '100%', height: '36px', borderRadius: '8px' }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <AnimatePresence mode="wait">

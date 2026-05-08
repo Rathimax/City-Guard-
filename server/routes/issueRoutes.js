@@ -1,18 +1,62 @@
 import express from 'express';
+import multer from 'multer';
 import Issue from '../models/Issue.js';
-import { parser } from '../config/cloudinary.js';
+import { cloudinary } from '../config/cloudinary.js';
 
 const router = express.Router();
 
+// Use memory storage so we can manually upload each file to Cloudinary
+// with the correct resource_type (image vs video/audio)
+const upload = multer({ storage: multer.memoryStorage() });
+
+const combinedUpload = upload.fields([
+  { name: 'image', maxCount: 1 },
+  { name: 'audio', maxCount: 1 },
+]);
+
+// Helper: upload a buffer to Cloudinary
+const uploadToCloudinary = (fileBuffer, options) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(options, (error, result) => {
+      if (error) reject(error);
+      else resolve(result);
+    });
+    stream.end(fileBuffer);
+  });
+};
+
 // @route   POST /api/issues
-// @desc    Create a new issue with image upload
-router.post('/', parser.single('image'), async (req, res) => {
+// @desc    Create a new issue with image and optional audio upload
+router.post('/', combinedUpload, async (req, res) => {
   try {
     const { userId, userName, issueDescription, latitude, longitude, urgency, isAnonymous } = req.body;
 
     // Validate image upload
-    if (!req.file) {
+    if (!req.files?.image?.[0]) {
       return res.status(400).json({ message: 'Please upload an image' });
+    }
+
+    // Upload image to Cloudinary
+    const imageFile = req.files.image[0];
+    const imageResult = await uploadToCloudinary(imageFile.buffer, {
+      folder: 'smart-city-issues',
+      resource_type: 'image',
+    });
+
+    let audioUrl = null;
+
+    // If audio file was uploaded, upload it to Cloudinary as video/audio resource
+    if (req.files?.audio?.[0]) {
+      try {
+        const audioFile = req.files.audio[0];
+        const audioResult = await uploadToCloudinary(audioFile.buffer, {
+          folder: 'smart-city-audio',
+          resource_type: 'video', // Cloudinary uses 'video' for audio files
+        });
+        audioUrl = audioResult.secure_url;
+      } catch (audioErr) {
+        console.warn('Audio upload to Cloudinary failed, proceeding without audio:', audioErr.message);
+      }
     }
 
     const newIssue = new Issue({
@@ -25,7 +69,8 @@ router.post('/', parser.single('image'), async (req, res) => {
         type: 'Point',
         coordinates: [parseFloat(longitude), parseFloat(latitude)]
       },
-      photoUrl: req.file.path, // Cloudinary URL
+      photoUrl: imageResult.secure_url,
+      audioUrl,
     });
 
     const savedIssue = await newIssue.save();

@@ -38,6 +38,7 @@ const IssueFeed = () => {
               urgency: issue.urgency || 'Normal',
               isAnonymous: issue.isAnonymous || false,
               userName: issue.userName || 'Anonymous citizen',
+              audioUrl: issue.audioUrl || null,
               location: issue.location?.coordinates?.length >= 2
                 ? `${issue.location.coordinates[1].toFixed(4)}, ${issue.location.coordinates[0].toFixed(4)}`
                 : 'Location Pending',

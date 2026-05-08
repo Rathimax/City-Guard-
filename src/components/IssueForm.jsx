@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Camera, MapPin, Send, X, Loader2, Lock, MousePointer2, Shield, AlertTriangle, Lightbulb, Trash2, Droplets, Zap, Activity, AlertCircle, MoreHorizontal, LayoutGrid, Check } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Camera, MapPin, Send, X, Loader2, Lock, MousePointer2, Shield, AlertTriangle, Lightbulb, Trash2, Droplets, Zap, Activity, AlertCircle, MoreHorizontal, LayoutGrid, Check, Mic, Square, Play, Pause } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import AuthModal from './AuthModal';
@@ -33,6 +33,18 @@ const IssueForm = () => {
   const [urgency, setUrgency] = useState('Normal');
   const [isUrgencyOpen, setIsUrgencyOpen] = useState(false);
   const [isAnonymous, setIsAnonymous] = useState(false);
+
+  // Audio recording state
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioBlob, setAudioBlob] = useState(null);
+  const [audioUrl, setAudioUrl] = useState(null);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const recordingTimerRef = useRef(null);
+  const audioPlayerRef = useRef(null);
+
   const { currentUser } = useAuth();
 
   // Update userName when user logs in
@@ -84,6 +96,77 @@ const IssueForm = () => {
     setImagePreview(null);
   };
 
+  // Audio recording handlers
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        setAudioBlob(blob);
+        setAudioUrl(URL.createObjectURL(blob));
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      setRecordingDuration(0);
+
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingDuration(prev => prev + 1);
+      }, 1000);
+    } catch (err) {
+      console.error('Microphone access denied:', err);
+      alert('Microphone access is required to record audio. Please allow microphone permissions.');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    setIsRecording(false);
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+  };
+
+  const removeAudio = () => {
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl);
+    }
+    setAudioBlob(null);
+    setAudioUrl(null);
+    setRecordingDuration(0);
+    setIsPlayingAudio(false);
+  };
+
+  const toggleAudioPlayback = () => {
+    if (!audioPlayerRef.current) return;
+    if (isPlayingAudio) {
+      audioPlayerRef.current.pause();
+    } else {
+      audioPlayerRef.current.play();
+    }
+    setIsPlayingAudio(!isPlayingAudio);
+  };
+
+  const formatDuration = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!userName || !description || !image || !location) {
@@ -101,9 +184,12 @@ const IssueForm = () => {
     formData.append('latitude', location.lat);
     formData.append('longitude', location.lng);
     formData.append('image', image);
+    if (audioBlob) {
+      formData.append('audio', audioBlob, 'recording.webm');
+    }
 
     try {
-      const response = await fetch('https://city-guard-backend.onrender.com/api/issues', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://city-guard-backend.onrender.com'}/api/issues`, {
         method: 'POST',
         body: formData,
       });
@@ -120,6 +206,7 @@ const IssueForm = () => {
         setImagePreview(null);
         setLocation(null);
         setIsAnonymous(false);
+        removeAudio();
         setTimeout(() => setIsSuccess(false), 5000);
       } else {
         const errorData = await response.json();
@@ -537,6 +624,176 @@ const IssueForm = () => {
                         <X size={16} />
                       </button>
                     </div>
+                  )}
+                </div>
+
+                {/* Audio Recorder */}
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Voice Note (Optional)</label>
+                  
+                  {!audioBlob && !isRecording ? (
+                    <div
+                      onClick={startRecording}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        height: '100px',
+                        background: 'var(--bg-secondary)',
+                        border: '2px dashed var(--border)',
+                        borderRadius: '16px',
+                        cursor: 'pointer',
+                        transition: 'var(--transition-smooth)',
+                        gap: '0.5rem'
+                      }}
+                      className="glass-hover"
+                    >
+                      <Mic size={28} color="var(--text-secondary)" />
+                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Tap to Record Audio</span>
+                    </div>
+                  ) : isRecording ? (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '1rem',
+                        padding: '1rem 1.25rem',
+                        background: 'rgba(239, 68, 68, 0.08)',
+                        border: '1px solid rgba(239, 68, 68, 0.25)',
+                        borderRadius: '16px',
+                        height: '100px'
+                      }}
+                    >
+                      <motion.div
+                        animate={{ scale: [1, 1.3, 1], opacity: [1, 0.5, 1] }}
+                        transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                        style={{
+                          width: '14px',
+                          height: '14px',
+                          borderRadius: '50%',
+                          background: '#ef4444',
+                          boxShadow: '0 0 12px rgba(239, 68, 68, 0.5)',
+                          flexShrink: 0
+                        }}
+                      />
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#ef4444', margin: 0 }}>Recording...</p>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '2px 0 0 0' }}>{formatDuration(recordingDuration)}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={stopRecording}
+                        style={{
+                          background: '#ef4444',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '44px',
+                          height: '44px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          color: 'white',
+                          boxShadow: '0 4px 14px rgba(239, 68, 68, 0.3)',
+                          flexShrink: 0
+                        }}
+                      >
+                        <Square size={18} fill="white" />
+                      </button>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.75rem',
+                        padding: '1rem 1.25rem',
+                        background: 'rgba(34, 197, 94, 0.08)',
+                        border: '1px solid rgba(34, 197, 94, 0.25)',
+                        borderRadius: '16px',
+                        height: '100px'
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={toggleAudioPlayback}
+                        style={{
+                          background: 'var(--primary)',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '40px',
+                          height: '40px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          color: 'white',
+                          flexShrink: 0
+                        }}
+                      >
+                        {isPlayingAudio ? <Pause size={18} /> : <Play size={18} />}
+                      </button>
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <Mic size={14} color="#22c55e" />
+                          <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>Voice Note</span>
+                        </div>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{formatDuration(recordingDuration)}</span>
+                        {/* Waveform bars */}
+                        <div style={{ display: 'flex', alignItems: 'end', gap: '2px', height: '16px' }}>
+                          {Array.from({ length: 20 }).map((_, i) => (
+                            <motion.div
+                              key={i}
+                              animate={isPlayingAudio ? {
+                                height: [4, Math.random() * 14 + 4, 4],
+                              } : {}}
+                              transition={{
+                                duration: 0.4 + Math.random() * 0.3,
+                                repeat: Infinity,
+                                delay: i * 0.05,
+                              }}
+                              style={{
+                                width: '3px',
+                                height: `${Math.random() * 10 + 4}px`,
+                                borderRadius: '2px',
+                                background: isPlayingAudio ? 'var(--primary)' : '#22c55e',
+                                opacity: 0.7,
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={removeAudio}
+                        style={{
+                          background: 'rgba(239, 68, 68, 0.1)',
+                          border: '1px solid rgba(239, 68, 68, 0.2)',
+                          borderRadius: '50%',
+                          width: '36px',
+                          height: '36px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          color: '#ef4444',
+                          flexShrink: 0
+                        }}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                      <audio
+                        ref={audioPlayerRef}
+                        src={audioUrl}
+                        onEnded={() => setIsPlayingAudio(false)}
+                        style={{ display: 'none' }}
+                      />
+                    </motion.div>
                   )}
                 </div>
 

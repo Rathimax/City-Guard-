@@ -30,6 +30,10 @@ const issueSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  audioUrl: {
+    type: String,
+    default: null
+  },
   status: {
     type: String,
     enum: ['Pending', 'In Progress', 'Resolved'],

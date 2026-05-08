@@ -293,6 +293,44 @@ const IssueCard = ({ issue, onVoteUpdate, showVotes = true }) => {
                         {issue.description || (issue.issueDescription?.includes(':') ? issue.issueDescription.split(':').slice(1).join(':').trim() : issue.issueDescription)}
                       </p>
 
+                      {/* Voice Note Player */}
+                      {issue.audioUrl && (
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '1rem',
+                          padding: '1rem 1.25rem',
+                          background: 'rgba(var(--primary-rgb), 0.06)',
+                          border: '1px solid rgba(var(--primary-rgb), 0.15)',
+                          borderRadius: '14px',
+                        }}>
+                          <div style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '50%',
+                            background: 'var(--primary)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                              <line x1="12" x2="12" y1="19" y2="22"></line>
+                            </svg>
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <p style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary)', margin: '0 0 6px 0', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Voice Note Attached</p>
+                            <audio
+                              controls
+                              src={issue.audioUrl}
+                              style={{ width: '100%', height: '32px', borderRadius: '8px' }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
                       {/* 3. Official Mayor's Note */}
                       <div style={{ 
                         background: 'rgba(var(--primary-rgb), 0.05)', 

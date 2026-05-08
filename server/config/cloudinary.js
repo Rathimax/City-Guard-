@@ -19,6 +19,16 @@ const storage = new CloudinaryStorage({
   },
 });
 
-const parser = multer({ storage: storage });
+const audioStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'smart-city-audio',
+    resource_type: 'video', // Cloudinary uses 'video' resource type for audio
+    allowed_formats: ['webm', 'mp3', 'wav', 'ogg', 'm4a'],
+  },
+});
 
-export { cloudinary, parser };
+const parser = multer({ storage: storage });
+const audioParser = multer({ storage: audioStorage });
+
+export { cloudinary, parser, audioParser };
