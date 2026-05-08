@@ -122,7 +122,13 @@ const IssueForm = () => {
       setRecordingDuration(0);
 
       recordingTimerRef.current = setInterval(() => {
-        setRecordingDuration(prev => prev + 1);
+        setRecordingDuration(prev => {
+          if (prev >= 179) { // 3 minutes limit (180s)
+            stopRecording();
+            return 180;
+          }
+          return prev + 1;
+        });
       }, 1000);
     } catch (err) {
       console.error('Microphone access denied:', err);
@@ -680,8 +686,13 @@ const IssueForm = () => {
                         }}
                       />
                       <div style={{ flex: 1 }}>
-                        <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#ef4444', margin: 0 }}>Recording...</p>
-                        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '2px 0 0 0' }}>{formatDuration(recordingDuration)}</p>
+                        <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#ef4444', margin: 0 }}>
+                          {recordingDuration >= 170 ? 'Limit approaching...' : 'Recording...'}
+                        </p>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '2px 0 0 0' }}>
+                          {formatDuration ? formatDuration(recordingDuration) : `${Math.floor(recordingDuration / 60)}:${((recordingDuration % 60) < 10 ? '0' : '') + (recordingDuration % 60)}`}
+                          <span style={{ opacity: 0.5, marginLeft: '4px' }}>/ 3:00</span>
+                        </p>
                       </div>
                       <button
                         type="button"
