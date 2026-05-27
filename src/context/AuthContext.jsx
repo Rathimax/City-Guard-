@@ -10,39 +10,65 @@ export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // For the purpose of this demo, we'll consider this email as the Mayor
-  const MAYOR_EMAIL = "mayor@cityguard.com";
+  const API_URL = import.meta.env.VITE_API_URL || 'https://city-guard-backend.onrender.com';
 
-  const signup = (email, password) => {
-    return createUserWithEmailAndPassword(auth, email, password);
-  };
-
-  const loginWithGoogle = () => {
-    return signInWithPopup(auth, googleProvider);
-  };
-
-  const login = (email, password) => {
-    // Demo Bypass for the user's specific request
-    if (email === MAYOR_EMAIL && password === "Mayorhu") {
-      const mockUser = {
-        email: MAYOR_EMAIL,
-        isMayor: true,
-        uid: "demo-mayor-id"
+  // Sync with MongoDB
+  const syncWithMongo = async (firebaseUser, region = null) => {
+    try {
+      const payload = {
+        firebaseUid: firebaseUser.uid,
+        email: firebaseUser.email,
       };
-      setCurrentUser(mockUser);
-      return Promise.resolve(mockUser);
+      if (region) payload.region = region;
+      
+      const res = await fetch(`${API_URL}/api/users/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        const mongoUser = await res.json();
+        return {
+          ...firebaseUser,
+          mongoId: mongoUser._id,
+          role: mongoUser.role,
+          isMayor: mongoUser.role === 'mayor',
+          region: mongoUser.region
+        };
+      } else {
+        console.warn("Mongo sync failed", await res.text());
+        return { ...firebaseUser, isMayor: false, region: region || 'Unknown' };
+      }
+    } catch (err) {
+      console.error("Mongo sync error", err);
+      return { ...firebaseUser, isMayor: false, region: region || 'Unknown' };
     }
-    
-    // Fallback to real Firebase if configured
-    return signInWithEmailAndPassword(auth, email, password);
+  };
+
+  const signup = async (email, password, region) => {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const fullUser = await syncWithMongo(userCredential.user, region);
+    setCurrentUser(fullUser);
+    return userCredential;
+  };
+
+  const loginWithGoogle = async (region) => {
+    const userCredential = await signInWithPopup(auth, googleProvider);
+    const fullUser = await syncWithMongo(userCredential.user, region);
+    setCurrentUser(fullUser);
+    return userCredential;
+  };
+
+  const login = async (email, password) => {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const fullUser = await syncWithMongo(userCredential.user);
+    setCurrentUser(fullUser);
+    return userCredential;
   };
 
   const logout = async () => {
     try {
-      // Clear local state first for immediate UI response
       setCurrentUser(null);
-      
-      // If Firebase is configured, sign out there too
       if (auth.signOut) {
         await signOut(auth);
       }
@@ -51,33 +77,45 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateRegion = async (newRegion) => {
+    if (!currentUser) return;
+    try {
+      const res = await fetch(`${API_URL}/api/users/region`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firebaseUid: currentUser.uid, region: newRegion })
+      });
+      if (res.ok) {
+        setCurrentUser(prev => ({ ...prev, region: newRegion }));
+      }
+    } catch (err) {
+      console.error("Failed to update region", err);
+    }
+  };
+
   useEffect(() => {
-    // Check if Firebase is likely configured (string longer than a few characters to avoid space strings)
     const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
     const isConfigured = !!apiKey && apiKey.trim().length > 5;
     
     if (!isConfigured) {
       console.warn("Firebase is not configured. Authentication features will be disabled.");
-      // Just timeout to simulate the app initialization without Firebase
       setTimeout(() => setLoading(false), 200);
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        user.isMayor = user.email === MAYOR_EMAIL;
+        const fullUser = await syncWithMongo(user);
+        setCurrentUser(fullUser);
+      } else {
+        setCurrentUser(null);
       }
-      setCurrentUser(user);
-      setLoading(false);
-    }, (error) => {
-      console.error("Auth state change error:", error);
       setLoading(false);
     });
 
-    // Fallback: If Firebase takes too long to respond, stop loading
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 3000);
+    }, 5000); // Increased timeout to allow sync
 
     return () => {
       unsubscribe();
@@ -91,7 +129,9 @@ export const AuthProvider = ({ children }) => {
     signup,
     loginWithGoogle,
     logout,
-    isMayor: currentUser?.isMayor || false
+    updateRegion,
+    isMayor: currentUser?.isMayor || false,
+    userRegion: currentUser?.region || 'Universal'
   };
 
   return (

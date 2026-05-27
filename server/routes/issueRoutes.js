@@ -29,7 +29,11 @@ const uploadToCloudinary = (fileBuffer, options) => {
 // @desc    Create a new issue with image and optional audio upload
 router.post('/', combinedUpload, async (req, res) => {
   try {
-    const { userId, userName, issueDescription, latitude, longitude, urgency, isAnonymous } = req.body;
+    const { userId, userName, issueDescription, latitude, longitude, urgency, isAnonymous, region } = req.body;
+
+    if (!region) {
+      return res.status(400).json({ message: 'Region is required' });
+    }
 
     // Validate image upload
     if (!req.files?.image?.[0]) {
@@ -65,6 +69,7 @@ router.post('/', combinedUpload, async (req, res) => {
       isAnonymous: isAnonymous === 'true' || isAnonymous === true,
       issueDescription,
       urgency,
+      region,
       location: {
         type: 'Point',
         coordinates: [parseFloat(longitude), parseFloat(latitude)]
@@ -82,10 +87,13 @@ router.post('/', combinedUpload, async (req, res) => {
 });
 
 // @route   GET /api/issues
-// @desc    Get all issues
+// @desc    Get all issues, optionally filtered by region
 router.get('/', async (req, res) => {
   try {
-    const issues = await Issue.find().sort({ voteScore: -1, createdAt: -1 });
+    const { region } = req.query;
+    const filter = region ? { region } : {};
+    
+    const issues = await Issue.find(filter).sort({ voteScore: -1, createdAt: -1 });
     res.json(issues);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });

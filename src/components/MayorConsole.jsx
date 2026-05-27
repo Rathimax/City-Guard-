@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Shield,
@@ -32,6 +33,7 @@ import {
   AlertTriangle,
   Mic
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import './MayorConsole.css';
 
 const COUNCILS = [
@@ -46,6 +48,7 @@ const COUNCILS = [
 ];
 
 const MayorConsole = () => {
+  const { userRegion } = useAuth();
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedIssue, setSelectedIssue] = useState(null);
@@ -57,8 +60,8 @@ const MayorConsole = () => {
   const [showSuccess, setShowSuccess] = useState(false);
 
   // Filter issues
-  const activeIssues = issues.filter(i => i.status !== 'Resolved');
-  const resolvedIssues = issues.filter(i => i.status === 'Resolved');
+  const activeIssues = issues.filter(i => i.status !== 'Resolved' && i.status !== 'Request Not Fulfilled');
+  const resolvedIssues = issues.filter(i => i.status === 'Resolved' || i.status === 'Request Not Fulfilled');
 
   // Form State for updates
   const [status, setStatus] = useState('');
@@ -67,7 +70,8 @@ const MayorConsole = () => {
 
   const fetchIssues = async () => {
     try {
-      const response = await fetch('https://city-guard-backend.onrender.com/api/issues');
+      const query = userRegion && userRegion !== 'Universal' ? `?region=${encodeURIComponent(userRegion)}` : '';
+      const response = await fetch(`https://city-guard-backend.onrender.com/api/issues${query}`);
       if (response.ok) {
         const data = await response.json();
         setIssues(data);
@@ -123,6 +127,7 @@ const MayorConsole = () => {
     switch (s) {
       case 'Resolved': return 'var(--success, #10b981)';
       case 'In Progress': return 'var(--secondary, #87ceeb)';
+      case 'Request Not Fulfilled': return '#ef4444'; // Red for unfulfilled status
       default: return 'var(--warning, #ffff00)';
     }
   };
@@ -138,13 +143,35 @@ const MayorConsole = () => {
   return (
     <div className="container mayor-console-container" style={{ paddingTop: '8rem', paddingBottom: '4rem' }}>
       <header style={{ marginBottom: '3rem' }}>
+        <Link 
+          to="/" 
+          className="btn btn-secondary glass-hover" 
+          style={{ 
+            display: 'inline-flex', 
+            alignItems: 'center', 
+            gap: '0.6rem', 
+            marginBottom: '1.5rem',
+            padding: '0.65rem 1.25rem',
+            borderRadius: '12px',
+            fontSize: '0.9rem',
+            fontWeight: 600,
+            textDecoration: 'none',
+            color: 'var(--text-primary)',
+            border: '1px solid var(--border)',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+            transition: 'var(--transition-smooth)'
+          }}
+        >
+          <Home size={16} color="var(--primary)" />
+          Back to Home
+        </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
           <div style={{ background: 'var(--primary)', padding: '10px', borderRadius: '12px' }}>
             <Shield size={32} color="var(--primary-foreground)" />
           </div>
           <div>
             <h1 className="console-title" style={{ fontSize: '2.5rem', fontFamily: 'var(--font-heading)' }}>Mayor's Command Console</h1>
-            <p className="console-subtitle" style={{ color: 'var(--text-secondary)' }}>Strategic oversight and resource allocation for urban infrastructure.</p>
+            <p className="console-subtitle" style={{ color: 'var(--text-secondary)' }}>Strategic oversight and resource allocation for {userRegion || 'Universal'} region.</p>
           </div>
         </div>
       </header>
@@ -214,7 +241,7 @@ const MayorConsole = () => {
                         <h4 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '4px' }}>
                           {issue.issueDescription?.includes(':') ? issue.issueDescription.split(':')[0] : (issue.title || 'Issue Report')}
                         </h4>
-                        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.8rem', color: 'var(--text-secondary)', flexWrap: 'wrap' }}>
                           <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Clock size={14} /> {new Date(issue.createdAt).toLocaleDateString()}</span>
                           <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><MapPin size={14} /> View Map</span>
                         </div>
@@ -276,7 +303,7 @@ const MayorConsole = () => {
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                         <CheckCircle size={18} color="var(--success)" />
-                        <span style={{ fontWeight: 600 }}>Resolved Archives ({resolvedIssues.length})</span>
+                        <span style={{ fontWeight: 600 }}>Resolved & Closed Archives ({resolvedIssues.length})</span>
                       </div>
                       {isResolvedExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                     </button>
@@ -419,8 +446,7 @@ const MayorConsole = () => {
                 )}
               </div>
 
-              <AnimatePresence mode="wait">
-                {selectedIssue.status === 'Resolved' && !isModifyingResolved ? (
+                {(selectedIssue.status === 'Resolved' || selectedIssue.status === 'Request Not Fulfilled') && !isModifyingResolved ? (
                   <motion.div
                     key="security-wall"
                     initial={{ opacity: 0, y: 10 }}
@@ -432,7 +458,9 @@ const MayorConsole = () => {
                       <Lock size={28} color="white" />
                     </div>
                     <div>
-                      <h3 style={{ fontSize: '1.4rem', marginBottom: '0.5rem', fontWeight: 700 }}>Case Resolved & Locked</h3>
+                      <h3 style={{ fontSize: '1.4rem', marginBottom: '0.5rem', fontWeight: 700 }}>
+                        {selectedIssue.status === 'Request Not Fulfilled' ? 'Case Unsolvable & Locked' : 'Case Resolved & Locked'}
+                      </h3>
                       <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', maxWidth: '320px', lineHeight: 1.5 }}>
                         This report has been officially closed and archived. Executive override is required for modifications.
                       </p>
@@ -512,7 +540,7 @@ const MayorConsole = () => {
                               overflow: 'hidden'
                             }}
                           >
-                            {['Pending', 'In Progress', 'Resolved'].map((opt) => (
+                             {['Pending', 'In Progress', 'Resolved', 'Request Not Fulfilled'].map((opt) => (
                               <div
                                 key={opt}
                                 onClick={() => {
@@ -577,6 +605,7 @@ const MayorConsole = () => {
                       <AnimatePresence>
                         {isCouncilOpen && (
                           <motion.div
+                            className="council-dropdown-list"
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
@@ -591,7 +620,9 @@ const MayorConsole = () => {
                               marginTop: '0.5rem',
                               boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
                               zIndex: 50,
-                              overflow: 'hidden'
+                              maxHeight: '240px',
+                              overflowY: 'auto',
+                              overflowX: 'hidden'
                             }}
                           >
                             {[{ value: 'Not Assigned', label: 'Select Council', icon: LayoutGrid }, ...COUNCILS].map((opt) => {
@@ -626,14 +657,20 @@ const MayorConsole = () => {
                     </div>
 
                     <div>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Mayor's Command</label>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 600 }}>
+                        {status === 'Request Not Fulfilled' ? "Mayor's Apology Letter & Explanation" : "Mayor's Command"}
+                      </label>
                       <textarea
                         className="input-field"
-                        placeholder="Provide specific instructions for the council..."
+                        placeholder={status === 'Request Not Fulfilled' 
+                          ? "Write an apology letter explaining why this issue cannot be fixed and what actions furthermore will be taken..." 
+                          : "Provide specific instructions for the council..."
+                        }
                         rows="4"
                         value={mayorCommands}
                         onChange={(e) => setMayorCommands(e.target.value)}
                         style={{ resize: 'none' }}
+                        required={status === 'Request Not Fulfilled'}
                       />
                     </div>
 
@@ -647,7 +684,6 @@ const MayorConsole = () => {
                     </button>
                   </motion.form>
                 )}
-              </AnimatePresence>
             </motion.div>
           ) : (
             <motion.div

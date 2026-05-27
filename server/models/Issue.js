@@ -15,6 +15,11 @@ const issueSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  region: {
+    type: String,
+    required: true,
+    trim: true
+  },
   location: {
     type: {
       type: String,
@@ -36,7 +41,7 @@ const issueSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Pending', 'In Progress', 'Resolved'],
+    enum: ['Pending', 'In Progress', 'Resolved', 'Request Not Fulfilled'],
     default: 'Pending'
   },
   urgency: {

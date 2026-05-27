@@ -24,14 +24,51 @@ const InsightsModal = ({ isOpen, onClose }) => {
   });
 
   useEffect(() => {
+    // Prevent background scroll — works on iOS Safari too
+    const preventScroll = (e) => {
+      // Allow scroll inside the modal itself
+      e.stopPropagation();
+    };
+
+    const preventTouchMove = (e) => {
+      e.preventDefault();
+    };
+
     if (isOpen) {
+      const scrollY = window.scrollY;
+      document.body.dataset.scrollY = scrollY.toString();
       document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      // Block touchmove at the body level — critical for iOS Safari
+      document.body.addEventListener('touchmove', preventTouchMove, { passive: false });
+      // Signal hero component to pause its scroll listeners
+      window.dispatchEvent(new CustomEvent('modal-scroll-lock', { detail: { locked: true } }));
       fetchIssues();
     } else {
-      document.body.style.overflow = 'unset';
+      const scrollY = parseInt(document.body.dataset.scrollY || '0', 10);
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      delete document.body.dataset.scrollY;
+      document.body.removeEventListener('touchmove', preventTouchMove);
+      // Signal hero component to resume its scroll listeners
+      window.dispatchEvent(new CustomEvent('modal-scroll-lock', { detail: { locked: false } }));
+      window.scrollTo(0, scrollY);
     }
+
     return () => {
-      document.body.style.overflow = 'unset';
+      const scrollY = parseInt(document.body.dataset.scrollY || '0', 10);
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      delete document.body.dataset.scrollY;
+      document.body.removeEventListener('touchmove', preventTouchMove);
+      window.dispatchEvent(new CustomEvent('modal-scroll-lock', { detail: { locked: false } }));
+      window.scrollTo(0, scrollY);
     };
   }, [isOpen]);
 
@@ -157,12 +194,15 @@ const InsightsModal = ({ isOpen, onClose }) => {
               flexDirection: 'column',
               gap: '2rem',
               overflowY: 'auto',
+              overscrollBehavior: 'contain',
+              WebkitOverflowScrolling: 'touch',
               border: '1px solid var(--primary)'
             }}
             onClick={e => e.stopPropagation()}
+            onTouchMove={e => e.stopPropagation()}
           >
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 <div style={{
                   background: 'var(--primary)',
@@ -205,7 +245,7 @@ const InsightsModal = ({ isOpen, onClose }) => {
             ) : (
               <>
                 {/* Metrics Grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.5rem' }}>
+                <div className="insights-metrics-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.5rem' }}>
                   <MetricCard
                     icon={TrendingUp}
                     label="Total Reports"
@@ -236,7 +276,7 @@ const InsightsModal = ({ isOpen, onClose }) => {
                   />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '2rem' }}>
+                <div className="insights-departments-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '2rem' }}>
                   {/* Departments */}
                   <div className="glass" style={{ padding: '1.5rem', background: 'rgba(var(--bg-secondary-rgb), 0.3)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>

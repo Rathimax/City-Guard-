@@ -40,6 +40,7 @@ const ScrollExpandMedia = ({
   const [isMobileState, setIsMobileState] = useState<boolean>(false);
 
   const sectionRef = useRef<HTMLDivElement | null>(null);
+  const modalLocked = useRef<boolean>(false);
 
   useEffect(() => {
     setScrollProgress(0);
@@ -47,8 +48,18 @@ const ScrollExpandMedia = ({
     setMediaFullyExpanded(false);
   }, [mediaType]);
 
+  // Pause hero touch/wheel listeners when a modal is open
+  useEffect(() => {
+    const handleModalLock = (e: Event) => {
+      modalLocked.current = (e as CustomEvent).detail.locked;
+    };
+    window.addEventListener('modal-scroll-lock', handleModalLock);
+    return () => window.removeEventListener('modal-scroll-lock', handleModalLock);
+  }, []);
+
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
+      if (modalLocked.current) return;
       if (mediaFullyExpanded && (e as any).deltaY < 0 && window.scrollY <= 5) {
         setMediaFullyExpanded(false);
         e.preventDefault();
@@ -75,6 +86,7 @@ const ScrollExpandMedia = ({
     };
 
     const handleTouchMove = (e: TouchEvent) => {
+      if (modalLocked.current) return;
       if (!touchStartY) return;
 
       const touchY = (e as any).touches[0].clientY;
@@ -334,7 +346,7 @@ const ScrollExpandMedia = ({
             </div>
 
             <motion.section
-              className='flex flex-col w-full px-8 py-10 md:px-16 lg:py-20'
+              className='flex flex-col w-full px-4 py-4 md:px-16 md:py-12 lg:py-20'
               initial={{ opacity: 0 }}
               animate={{ opacity: showContent ? 1 : 0 }}
               transition={{ duration: 0.7 }}

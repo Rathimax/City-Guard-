@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero.tsx';
 import IssueForm from './components/IssueForm';
+import RegionPromptModal from './components/RegionPromptModal';
 import IssueFeed from './components/IssueFeed';
 import LiveInsights from './components/LiveInsights';
 import MayorConsole from './components/MayorConsole';
@@ -31,7 +32,27 @@ const Home = () => {
           </div>
         </div>
       )}
-      <div style={{ marginTop: isMayor ? '1rem' : '3rem' }}>
+      {isMayor && (
+        <div className="container" style={{ margin: '2rem auto', textAlign: 'center' }}>
+          <Link 
+            to="/mayor-console" 
+            className="btn btn-primary" 
+            style={{ 
+              padding: '1rem 2.5rem', 
+              fontSize: '1.15rem', 
+              fontWeight: 700, 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: '0.5rem', 
+              borderRadius: '12px', 
+              boxShadow: '0 10px 25px -5px var(--ring)' 
+            }}
+          >
+            Go to Mayor's Command Console
+          </Link>
+        </div>
+      )}
+      <div style={{ marginTop: isMayor ? '2rem' : '3rem' }}>
         <IssueFeed />
       </div>
     </main>
@@ -76,6 +97,7 @@ function App() {
         <GradientBackground>
           <div className="app-container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Navbar />
+            <RegionPromptModal />
 
           <div style={{ flex: 1 }}>
             <Routes>
@@ -96,7 +118,7 @@ function App() {
           }}>
             <div className="container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1.5rem' }}>
               <p>© 2026 CityGuard Smart City Systems. All rights reserved.</p>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', marginTop: '1rem' }}>
+              <div className="footer-links" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '1rem', marginTop: '1rem' }}>
                 <button onClick={() => setActiveModal('privacy')} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: 'inherit', fontFamily: 'inherit' }}>Privacy Policy</button>
                 <button onClick={() => setActiveModal('terms')} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: 'inherit', fontFamily: 'inherit' }}>Terms of Service</button>
                 <button onClick={() => setActiveModal('support')} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: 'inherit', fontFamily: 'inherit' }}>Contact Support</button>

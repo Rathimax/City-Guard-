@@ -36,6 +36,7 @@ const IssueCard = ({ issue, onVoteUpdate, showVotes = true }) => {
     switch (s?.toLowerCase()) {
       case 'resolved': return '#10b981';
       case 'in progress': return '#87ceeb';
+      case 'request not fulfilled': return '#ef4444';
       default: return '#fbbf24';
     }
   };
@@ -175,20 +176,66 @@ const IssueCard = ({ issue, onVoteUpdate, showVotes = true }) => {
                   @media (max-width: 768px) {
                     .modal-split-layout {
                       flex-direction: column !important;
-                      height: 95vh !important;
+                      height: 90vh !important;
+                      overflow-y: auto !important;
                     }
                     .modal-left-pane {
                       border-right: none !important;
                       border-bottom: 1px solid var(--glass-border);
-                      max-height: 50vh;
+                      max-height: none !important;
+                      height: auto !important;
+                      flex: none !important;
+                      overflow-y: visible !important;
+                    }
+                    .modal-image-container {
+                      height: 200px !important;
                     }
                     .modal-right-pane {
                       padding-top: 1rem !important;
+                      max-height: none !important;
+                      height: auto !important;
+                      flex: none !important;
+                      overflow-y: visible !important;
+                    }
+                    .modal-comments-container {
+                      padding: 1.5rem !important;
+                      padding-top: 2rem !important;
+                      overflow-y: visible !important;
+                      height: auto !important;
+                      flex: none !important;
+                    }
+                    .modal-comments-list {
+                      overflow-y: visible !important;
+                      max-height: none !important;
+                      height: auto !important;
+                      flex: none !important;
                     }
                     .modal-close-btn {
-                      background: rgba(0,0,0,0.5) !important;
+                      background: rgba(0,0,0,0.6) !important;
                       color: white !important;
-                      backdrop-filter: blur(4px);
+                      backdrop-filter: blur(8px);
+                      display: flex !important;
+                      position: absolute !important;
+                      top: 16px !important;
+                      right: 16px !important;
+                      z-index: 100 !important;
+                    }
+                    .modal-voting-container {
+                      padding: 0.4rem 0.8rem !important;
+                      margin-bottom: 1rem !important;
+                      gap: 0.75rem !important;
+                      border-radius: 8px !important;
+                    }
+                    .modal-voting-btn {
+                      font-size: 0.8rem !important;
+                      gap: 4px !important;
+                    }
+                    .modal-voting-btn svg {
+                      width: 16px !important;
+                      height: 16px !important;
+                    }
+                    .modal-voting-divider {
+                      height: 16px !important;
                     }
                   }
                 `}
@@ -196,7 +243,7 @@ const IssueCard = ({ issue, onVoteUpdate, showVotes = true }) => {
 
               {/* Left Column: Details */}
               <div className="modal-left-pane" style={{ flex: '1.2', borderRight: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-                <div style={{ position: 'relative', height: '300px', flexShrink: 0 }}>
+                <div className="modal-image-container" style={{ position: 'relative', height: '300px', flexShrink: 0 }}>
                   <img src={issue.image || issue.photoUrl} alt="Issue" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   {/* Mobile close button (visible only on mobile due to absolute positioning stacking) */}
                   <button 
@@ -219,22 +266,27 @@ const IssueCard = ({ issue, onVoteUpdate, showVotes = true }) => {
                     {/* Background Line */}
                     <div style={{ position: 'absolute', top: '12px', left: '40px', right: '40px', height: '2px', background: 'var(--glass-border)', zIndex: 1 }}></div>
                     
-                    {['Reported', 'Review', 'Assigned', 'Started', 'Resolved'].map((step, idx) => {
-                      const currentStep = issue.status === 'resolved' ? 4 : (issue.status === 'in progress' ? 3 : (issue.assignedTo && issue.assignedTo !== 'Not Assigned' ? 2 : 1));
+                    {['Reported', 'Review', 'Assigned', 'Started', issue.status === 'request not fulfilled' ? 'Unresolvable' : 'Resolved'].map((step, idx) => {
+                      const isUnfulfilled = issue.status === 'request not fulfilled';
+                      const currentStep = (issue.status === 'resolved' || isUnfulfilled) ? 4 : (issue.status === 'in progress' ? 3 : (issue.assignedTo && issue.assignedTo !== 'Not Assigned' ? 2 : 1));
                       const isCompleted = idx <= currentStep;
+                      
+                      const activeColor = (isUnfulfilled && idx === 4) ? '#ef4444' : 'var(--primary)';
+                      const glowColor = (isUnfulfilled && idx === 4) ? 'rgba(239, 68, 68, 0.4)' : 'rgba(var(--primary-rgb), 0.4)';
+                      
                       return (
                         <div key={step} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', zIndex: 2, flex: 1 }}>
                           <div style={{ 
                             width: '24px', height: '24px', borderRadius: '50%', 
-                            background: isCompleted ? 'var(--primary)' : 'var(--bg-secondary)',
-                            border: `2px solid ${isCompleted ? 'var(--primary)' : 'var(--glass-border)'}`,
+                            background: isCompleted ? activeColor : 'var(--bg-secondary)',
+                            border: `2px solid ${isCompleted ? activeColor : 'var(--glass-border)'}`,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            boxShadow: isCompleted ? '0 0 10px rgba(var(--primary-rgb), 0.4)' : 'none',
+                            boxShadow: isCompleted ? `0 0 10px ${glowColor}` : 'none',
                             transition: 'all 0.3s ease'
                           }}>
                             {isCompleted && <CheckCircle size={14} color="white" />}
                           </div>
-                          <span style={{ fontSize: '0.65rem', fontWeight: isCompleted ? 700 : 500, color: isCompleted ? 'var(--text-primary)' : 'var(--text-secondary)', textAlign: 'center' }}>{step}</span>
+                          <span style={{ fontSize: '0.65rem', fontWeight: isCompleted ? 700 : 500, color: isCompleted ? (isUnfulfilled && idx === 4 ? '#ef4444' : 'var(--text-primary)') : 'var(--text-secondary)', textAlign: 'center' }}>{step}</span>
                         </div>
                       );
                     })}
@@ -269,17 +321,19 @@ const IssueCard = ({ issue, onVoteUpdate, showVotes = true }) => {
                     </div>
 
                     {showVotes && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '1.5rem', background: 'var(--bg-secondary)', padding: '0.75rem 1.25rem', borderRadius: '12px', width: 'fit-content', border: '1px solid var(--glass-border)' }}>
+                      <div className="modal-voting-container" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '1.5rem', background: 'var(--bg-secondary)', padding: '0.75rem 1.25rem', borderRadius: '12px', width: 'fit-content', border: '1px solid var(--glass-border)' }}>
                         <button 
                           onClick={() => handleVote('up')}
+                          className="modal-voting-btn"
                           style={{ background: 'none', border: 'none', padding: 0, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
                         >
                           <ArrowBigUp size={22} fill={userVote === 'up' ? 'var(--primary)' : 'none'} color={userVote === 'up' ? 'var(--primary)' : 'var(--text-secondary)'} />
                           <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{issue.upvotes || 0} Upvotes</span>
                         </button>
-                        <div style={{ width: '1px', height: '24px', background: 'var(--glass-border)' }}></div>
+                        <div className="modal-voting-divider" style={{ width: '1px', height: '24px', background: 'var(--glass-border)' }}></div>
                         <button 
                           onClick={() => handleVote('down')}
+                          className="modal-voting-btn"
                           style={{ background: 'none', border: 'none', padding: 0, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
                         >
                           <ArrowBigDown size={22} fill={userVote === 'down' ? '#ef4444' : 'none'} color={userVote === 'down' ? '#ef4444' : 'var(--text-secondary)'} />
@@ -333,20 +387,28 @@ const IssueCard = ({ issue, onVoteUpdate, showVotes = true }) => {
 
                       {/* 3. Official Mayor's Note */}
                       <div style={{ 
-                        background: 'rgba(var(--primary-rgb), 0.05)', 
-                        borderLeft: '4px solid var(--primary)', 
+                        background: issue.status === 'request not fulfilled' ? 'rgba(239, 68, 68, 0.05)' : 'rgba(var(--primary-rgb), 0.05)', 
+                        borderLeft: `4px solid ${issue.status === 'request not fulfilled' ? '#ef4444' : 'var(--primary)'}`, 
                         padding: '1.25rem', 
                         borderRadius: '12px',
                         marginTop: '1rem'
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                          <Shield size={18} color="var(--primary)" />
-                          <span style={{ fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--primary)' }}>Official Response</span>
+                          <Shield size={18} color={issue.status === 'request not fulfilled' ? '#ef4444' : 'var(--primary)'} />
+                          <span style={{ 
+                            fontWeight: 800, 
+                            fontSize: '0.75rem', 
+                            textTransform: 'uppercase', 
+                            letterSpacing: '0.05em', 
+                            color: issue.status === 'request not fulfilled' ? '#ef4444' : 'var(--primary)' 
+                          }}>
+                            {issue.status === 'request not fulfilled' ? "Mayor's Apology & Explanation" : "Official Response"}
+                          </span>
                         </div>
                         <p style={{ fontStyle: 'italic', color: 'var(--text-primary)', fontSize: '0.95rem' }}>
                           {issue.mayorCommands ? `"${issue.mayorCommands}"` : "Official review is currently underway. The Mayor's office will provide instructions shortly."}
                         </p>
-                        {issue.assignedTo && issue.assignedTo !== 'Not Assigned' && (
+                        {issue.status !== 'request not fulfilled' && issue.assignedTo && issue.assignedTo !== 'Not Assigned' && (
                           <div style={{ marginTop: '12px', fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <CheckCircle size={14} color="#10b981" />
                             <span>Action assigned to: <strong>{issue.assignedTo}</strong></span>
@@ -382,12 +444,12 @@ const IssueCard = ({ issue, onVoteUpdate, showVotes = true }) => {
                   `}
                 </style>
 
-                <div style={{ padding: '2rem', paddingTop: '3.5rem', flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'hidden' }}>
+                <div className="modal-comments-container" style={{ padding: '2rem', paddingTop: '3.5rem', flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'hidden' }}>
                   <h3 style={{ fontSize: '1.2rem', fontFamily: 'var(--font-heading)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                     <MessageSquare size={20} /> Comments ({comments.length})
                   </h3>
                   
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem', flex: 1, overflowY: 'auto', paddingRight: '4px' }}>
+                  <div className="modal-comments-list" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem', flex: 1, overflowY: 'auto', paddingRight: '4px' }}>
                     {comments.map(comment => (
                       <div key={comment._id} style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '12px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
@@ -625,14 +687,22 @@ const IssueCard = ({ issue, onVoteUpdate, showVotes = true }) => {
 
         {issue.mayorCommands && (
           <div className="issue-card-instruction" style={{
-            background: 'rgba(var(--primary-rgb), 0.05)',
-            borderLeft: '3px solid var(--primary)',
+            background: issue.status === 'request not fulfilled' ? 'rgba(239, 68, 68, 0.05)' : 'rgba(var(--primary-rgb), 0.05)',
+            borderLeft: `3px solid ${issue.status === 'request not fulfilled' ? '#ef4444' : 'var(--primary)'}`,
             padding: '0.75rem',
             borderRadius: '8px',
             marginBottom: '1.25rem',
             fontSize: '0.8rem'
           }}>
-            <p style={{ fontWeight: 700, marginBottom: '2px', color: 'var(--primary)', fontSize: '0.65rem', textTransform: 'uppercase' }}>Mayor's Instruction</p>
+            <p style={{ 
+              fontWeight: 700, 
+              marginBottom: '2px', 
+              color: issue.status === 'request not fulfilled' ? '#ef4444' : 'var(--primary)', 
+              fontSize: '0.65rem', 
+              textTransform: 'uppercase' 
+            }}>
+              {issue.status === 'request not fulfilled' ? "Mayor's Apology & Explanation" : "Mayor's Instruction"}
+            </p>
             <p style={{ fontStyle: 'italic', color: 'var(--foreground)' }}>"{issue.mayorCommands}"</p>
           </div>
         )}

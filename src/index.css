@@ -329,8 +329,7 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .logo-text {
-    font-size: 0.9rem !important;
-    letter-spacing: -0.2px !important;
+    display: none !important;
   }
 
   .logo-icon-container {
@@ -380,21 +379,52 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 0.9rem !important;
   }
 
-  .form-grid, .stat-grid {
+  .form-grid {
     grid-template-columns: 1fr !important;
     gap: 1.5rem !important;
   }
 
   .stat-grid {
-    gap: 0.75rem !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.5rem !important;
+  }
+
+  .stat-grid > div {
+    padding: 0.75rem !important;
+    gap: 0.35rem !important;
+    border-radius: 10px !important;
+  }
+
+  .stat-grid > div > div {
+    gap: 0.4rem !important;
+  }
+
+  .stat-grid > div > div span {
+    font-size: 0.72rem !important;
+  }
+
+  .stat-grid > div > span:last-child {
+    font-size: 1.15rem !important;
+  }
+
+  .liquid-glass {
+    padding: 1.25rem !important;
+    gap: 1.25rem !important;
+    min-height: auto !important;
+  }
+
+  .liquid-glass h3 {
+    font-size: 1.05rem !important;
+    margin-bottom: 1rem !important;
   }
 
   .feed-title {
-    font-size: 2.25rem !important;
+    font-size: 1.75rem !important;
+    margin-bottom: 0.25rem !important;
   }
   
   .feed-subtitle {
-    font-size: 0.95rem !important;
+    font-size: 0.85rem !important;
   }
 
   .grid-title {
@@ -406,13 +436,13 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .about-title {
-    font-size: 1.5rem !important;
-    margin-bottom: 1rem !important;
+    font-size: 1.2rem !important;
+    margin-bottom: 0.5rem !important;
   }
 
   .about-text {
-    font-size: 1rem !important;
-    margin-bottom: 1rem !important;
+    font-size: 0.825rem !important;
+    margin-bottom: 0.75rem !important;
   }
 
   /* Map Modal Fixes */
@@ -454,7 +484,21 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .mayor-console-container {
-    padding-top: 5rem !important;
+    padding-top: 7.5rem !important;
+  }
+
+  .insights-departments-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* 2x2 grid for metric cards on mobile */
+  .insights-metrics-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+  }
+
+  .insights-metrics-grid .glass {
+    padding: 1rem !important;
   }
 
   .console-title {
@@ -501,4 +545,52 @@ h1, h2, h3, h4, h5, h6 {
     padding: 2px 8px !important;
     font-size: 0.65rem !important;
   }
+
+  /* Active Region & Tabs scale down for mobile view */
+  .active-region-badge {
+    padding: 0.45rem 1rem !important;
+    gap: 0.4rem !important;
+    font-size: 0.8rem !important;
+    border-radius: 12px !important;
+  }
+
+  .active-region-pin {
+    width: 14px !important;
+    height: 14px !important;
+  }
+
+  .active-region-label {
+    font-weight: 500 !important;
+  }
+
+  .active-region-value {
+    padding: 1px 6px !important;
+    font-size: 0.75rem !important;
+    border-radius: 4px !important;
+  }
+
+  .feed-tabs-wrapper {
+    padding: 4px !important;
+    border-radius: 12px !important;
+    margin-bottom: 2rem !important;
+    gap: 2px !important;
+  }
+
+  .feed-tab-btn {
+    padding: 8px 14px !important;
+    font-size: 0.78rem !important;
+    border-radius: 8px !important;
+    gap: 4px !important;
+  }
+
+  .feed-tab-count {
+    font-size: 0.625rem !important;
+    padding: 1px 5px !important;
+    border-radius: 4px !important;
+  }
+}
+
+.scroll-locked {
+  overflow: hidden !important;
+  height: 100vh !important;
 }

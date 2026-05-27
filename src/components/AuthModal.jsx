@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Lock, Mail, Loader2, ShieldCheck, ArrowRight, UserPlus } from 'lucide-react';
+import { X, Lock, Mail, Loader2, ShieldCheck, ArrowRight, UserPlus, MapPin } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useRegions } from '../hooks/useRegions';
+import CustomDropdown from './CustomDropdown';
 
 const AuthModal = ({ isOpen, onClose }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [region, setRegion] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login, signup, loginWithGoogle } = useAuth();
+  const { regions, loading: regionsLoading } = useRegions();
 
   useEffect(() => {
     if (isOpen) {
@@ -31,7 +35,8 @@ const AuthModal = ({ isOpen, onClose }) => {
       if (isLogin) {
         await login(email, password);
       } else {
-        await signup(email, password);
+        if (!region) throw new Error("Please select a region");
+        await signup(email, password, region);
       }
       onClose();
     } catch (err) {
@@ -44,9 +49,17 @@ const AuthModal = ({ isOpen, onClose }) => {
 
   const handleGoogleLogin = async () => {
     setError('');
+    
+    // For signup via Google, we need a region. 
+    // We'll require a region to be selected if we are on the "Sign Up" tab.
+    if (!isLogin && !region) {
+      setError('Please select a region before signing up with Google.');
+      return;
+    }
+    
     setLoading(true);
     try {
-      await loginWithGoogle();
+      await loginWithGoogle(region);
       onClose();
     } catch (err) {
       setError(err.message || 'Google Sign-In failed.');
@@ -155,6 +168,21 @@ const AuthModal = ({ isOpen, onClose }) => {
             )}
 
             <form onSubmit={handleEmailAuth} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {!isLogin && (
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>Select Region/Society</label>
+                  <CustomDropdown
+                    value={region}
+                    onChange={setRegion}
+                    options={regions}
+                    placeholder="Select your region..."
+                    isLoading={regionsLoading}
+                    leftIcon={MapPin}
+                    required={!isLogin}
+                  />
+                </div>
+              )}
+
               <div>
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: 500 }}>Email Address</label>
                 <div style={{ position: 'relative' }}>

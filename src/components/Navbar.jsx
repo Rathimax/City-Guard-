@@ -1,17 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Shield, Bell, User, Sun, Moon, Map as MapIcon, LogOut, LayoutDashboard, Activity } from 'lucide-react';
+import { Shield, Bell, User, Sun, Moon, Map as MapIcon, Activity } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import MapModal from './MapModal';
 import NotificationDropdown from './NotificationDropdown';
 import AuthModal from './AuthModal';
 import InsightsModal from './InsightsModal';
+import ProfileModal from './ProfileModal';
 import { useAuth } from '../context/AuthContext';
 
 const Navbar = () => {
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isInsightsOpen, setIsInsightsOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(document.documentElement.classList.contains('dark'));
   const [unreadCount, setUnreadCount] = useState(2);
@@ -32,7 +34,7 @@ const Navbar = () => {
     };
   }, [isNotificationsOpen]);
 
-  const { currentUser, logout, isMayor } = useAuth();
+  const { currentUser, isMayor } = useAuth();
   const navigate = useNavigate();
 
   const toggleTheme = () => {
@@ -44,15 +46,6 @@ const Navbar = () => {
     setIsNotificationsOpen(!isNotificationsOpen);
     if (!isNotificationsOpen) {
       setUnreadCount(0);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/');
-    } catch (err) {
-      console.error('Logout failed:', err);
     }
   };
 
@@ -98,10 +91,6 @@ const Navbar = () => {
 
         <div className="nav-right-section" style={{ display: 'flex', alignItems: 'center', gap: 'clamp(0.5rem, 4vw, 2rem)' }}>
           <div className="nav-links" style={{ display: 'flex', gap: '1.5rem', color: 'var(--muted-foreground)', fontWeight: 500, alignItems: 'center' }}>
-            <Link to="/" style={{ color: 'var(--foreground)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <LayoutDashboard size={20} className="md:size-[18px]" />
-              <span className="nav-text">Dashboard</span>
-            </Link>
             <button
               onClick={() => setIsMapOpen(true)}
               style={{
@@ -246,25 +235,12 @@ const Navbar = () => {
                   fontSize: '0.875rem',
                   fontWeight: 'bold',
                   color: 'var(--primary-foreground)'
-                }}>
+                }}
+                onClick={() => setIsProfileOpen(true)}
+                title="Profile"
+              >
                   {currentUser.email.charAt(0).toUpperCase()}
                 </div>
-                <button
-                  onClick={handleLogout}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: 'var(--text-secondary)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: 0
-                  }}
-                  title="Logout"
-                >
-                  <LogOut size={20} />
-                </button>
               </div>
             ) : (
               <button
@@ -299,6 +275,10 @@ const Navbar = () => {
       <InsightsModal
         isOpen={isInsightsOpen}
         onClose={() => setIsInsightsOpen(false)}
+      />
+      <ProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
       />
     </>
   );

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import IssueCard from './IssueCard';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, ChevronDown } from 'lucide-react';
+import { Loader2, ChevronDown, MapPin } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const IssueFeed = () => {
   const [issues, setIssues] = useState([]);
@@ -9,11 +10,14 @@ const IssueFeed = () => {
   const [showAllActive, setShowAllActive] = useState(false);
   const [showAllResolved, setShowAllResolved] = useState(false);
   const [activeTab, setActiveTab] = useState('active');
+  const { userRegion } = useAuth();
 
   useEffect(() => {
     const fetchIssues = async () => {
       try {
-        const response = await fetch('https://city-guard-backend.onrender.com/api/issues');
+        const query = userRegion !== 'Universal' ? `?region=${encodeURIComponent(userRegion)}` : '';
+        const API_URL = import.meta.env.VITE_API_URL || 'https://city-guard-backend.onrender.com';
+        const response = await fetch(`${API_URL}/api/issues${query}`);
         if (response.ok) {
           const data = await response.json();
           const transformedIssues = data.map(issue => {
@@ -62,13 +66,14 @@ const IssueFeed = () => {
       }
     };
 
+    setIsLoading(true); // Show loader when region changes
     fetchIssues();
     const interval = setInterval(fetchIssues, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [userRegion]);
 
-  const activeIssues = issues.filter(i => i.status !== 'resolved');
-  const resolvedIssues = issues.filter(i => i.status === 'resolved');
+  const activeIssues = issues.filter(i => i.status !== 'resolved' && i.status !== 'request not fulfilled');
+  const resolvedIssues = issues.filter(i => i.status === 'resolved' || i.status === 'request not fulfilled');
 
   const onVoteUpdate = (updatedIssue) => {
     setIssues(prev => prev.map(issue =>
@@ -167,16 +172,45 @@ const IssueFeed = () => {
 
   return (
     <section className="container" id="community-feed" style={{ paddingTop: '4rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h2 className="feed-title" style={{ fontSize: '3rem', fontFamily: 'var(--font-heading)', marginBottom: '0.5rem' }}>Community Board</h2>
           <p className="feed-subtitle" style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>Prioritizing city issues through crowdsourced community feedback.</p>
         </div>
-        {isLoading && <Loader2 className="animate-spin" size={24} color="var(--primary)" />}
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div className="active-region-badge" style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.625rem',
+            padding: '0.75rem 1.5rem',
+            borderRadius: '16px',
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--glass-border)',
+            color: 'var(--text-primary)',
+            fontSize: '0.95rem',
+            fontWeight: 700,
+            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.03)',
+            backdropFilter: 'blur(10px)'
+          }}>
+            <MapPin size={18} className="active-region-pin" style={{ color: 'var(--primary)' }} />
+            <span className="active-region-label" style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Active Region:</span>
+            <span className="active-region-value" style={{ 
+              color: 'var(--primary)', 
+              background: 'rgba(var(--primary-rgb, 108, 92, 231), 0.1)', 
+              padding: '2px 8px', 
+              borderRadius: '6px',
+              fontFamily: 'var(--font-heading)'
+            }}>
+              {userRegion}
+            </span>
+          </div>
+          {isLoading && <Loader2 className="animate-spin" size={24} color="var(--primary)" />}
+        </div>
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '3rem' }}>
-        <div style={{ 
+        <div className="feed-tabs-wrapper" style={{ 
           background: 'rgba(255, 255, 255, 0.03)', 
           backdropFilter: 'blur(10px)',
           padding: '6px', 
@@ -187,11 +221,12 @@ const IssueFeed = () => {
         }}>
           {[
             { id: 'active', label: 'Active Reports', count: activeIssues.length },
-            { id: 'resolved', label: 'Resolved Cases', count: resolvedIssues.length }
+            { id: 'resolved', label: 'Resolved & Closed', count: resolvedIssues.length }
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
+              className="feed-tab-btn"
               style={{
                 padding: '10px 24px',
                 borderRadius: '12px',
@@ -209,7 +244,7 @@ const IssueFeed = () => {
               }}
             >
               {tab.label}
-              <span style={{ 
+              <span className="feed-tab-count" style={{ 
                 fontSize: '0.75rem', 
                 opacity: activeTab === tab.id ? 0.8 : 0.6, 
                 background: activeTab === tab.id ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.05)',
