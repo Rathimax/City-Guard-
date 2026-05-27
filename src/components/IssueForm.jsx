@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Camera, MapPin, Send, X, Loader2, Lock, MousePointer2, Shield, AlertTriangle, Lightbulb, Trash2, Droplets, Zap, Activity, AlertCircle, MoreHorizontal, LayoutGrid, Check, Mic, Square, Play, Pause } from 'lucide-react';
+import { Camera, MapPin, Send, X, Loader2, Lock, MousePointer2, Shield, AlertTriangle, Lightbulb, Trash2, Droplets, Zap, Activity, AlertCircle, MoreHorizontal, LayoutGrid, Check, Mic, Square, Play, Pause, ClipboardList } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import AuthModal from './AuthModal';
@@ -451,7 +451,10 @@ const IssueForm = () => {
                 position: 'absolute',
                 top: isMobile ? '17px' : '21px',
                 left: isMobile ? '17px' : '20px',
-                width: step === 1 ? '0%' : step === 2 ? (isMobile ? 'calc(50% - 17px)' : 'calc(50% - 20px)') : (isMobile ? 'calc(100% - 34px)' : 'calc(100% - 40px)'),
+                width: step === 1 ? '0%'
+                  : step === 2 ? (isMobile ? 'calc(33.33% - 12px)' : 'calc(33.33% - 14px)')
+                  : step === 3 ? (isMobile ? 'calc(66.66% - 12px)' : 'calc(66.66% - 14px)')
+                  : (isMobile ? 'calc(100% - 34px)' : 'calc(100% - 40px)'),
                 height: '3px',
                 background: 'var(--primary)',
                 boxShadow: '0 0 10px var(--ring)',
@@ -464,7 +467,8 @@ const IssueForm = () => {
               {[
                 { num: 1, label: 'Details', icon: Lightbulb },
                 { num: 2, label: 'Evidence', icon: Camera },
-                { num: 3, label: 'Location', icon: MapPin }
+                { num: 3, label: 'Location', icon: MapPin },
+                { num: 4, label: 'Review', icon: ClipboardList }
               ].map((s) => {
                 const StepIcon = s.icon;
                 const isActive = step >= s.num;
@@ -1210,12 +1214,271 @@ const IssueForm = () => {
                       ← Back
                     </button>
                     <button
+                      type="button"
+                      disabled={!location}
+                      onClick={() => {
+                        setDirection(1);
+                        setStep(4);
+                      }}
+                      className="btn btn-primary"
+                      style={{ flex: 2, justifyContent: 'center', padding: isMobile ? '0.85rem' : '1.25rem', fontWeight: 700, fontSize: isMobile ? '0.9rem' : '1rem' }}
+                    >
+                      <ClipboardList size={isMobile ? 18 : 20} />
+                      <span>Review & Submit →</span>
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Step 4: Review & Submit */}
+              {step === 4 && (
+                <motion.div
+                  key="step4"
+                  custom={direction}
+                  variants={stepVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '1rem' : '1.5rem' }}
+                >
+                  <div>
+                    <h3 style={{ fontSize: isMobile ? '1.05rem' : '1.25rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-primary)' }}>4. Review & Submit</h3>
+                    <p style={{ fontSize: isMobile ? '0.78rem' : '0.875rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                      Double-check everything before sending your report to the city.
+                    </p>
+                  </div>
+
+                  {/* Review Card */}
+                  <div style={{
+                    background: 'var(--bg-secondary)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '16px',
+                    overflow: 'hidden'
+                  }}>
+
+                    {/* ── DETAILS ── */}
+                    <div style={{
+                      padding: isMobile ? '0.85rem' : '1.25rem',
+                      borderBottom: '1px solid var(--border)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: isMobile ? '0.65rem' : '0.85rem' }}>
+                        <Lightbulb size={isMobile ? 13 : 14} color="var(--primary)" />
+                        <span style={{ fontSize: isMobile ? '0.65rem' : '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--primary)' }}>Details</span>
+                      </div>
+
+                      {/* Title + Category */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: isMobile ? '0.6rem' : '1rem', marginBottom: isMobile ? '0.6rem' : '0.85rem' }}>
+                        <div>
+                          <span style={{ fontSize: isMobile ? '0.65rem' : '0.72rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '2px', fontWeight: 500 }}>Issue Title</span>
+                          <span style={{ fontSize: isMobile ? '0.82rem' : '0.95rem', fontWeight: 600, color: 'var(--text-primary)', wordBreak: 'break-word' }}>
+                            {title || <em style={{ opacity: 0.4 }}>—</em>}
+                          </span>
+                        </div>
+                        <div>
+                          <span style={{ fontSize: isMobile ? '0.65rem' : '0.72rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '2px', fontWeight: 500 }}>Category</span>
+                          <span style={{ fontSize: isMobile ? '0.82rem' : '0.95rem', fontWeight: 600, color: 'var(--text-primary)', wordBreak: 'break-word' }}>
+                            {CATEGORIES.find(c => c.value === category)?.label || <em style={{ opacity: 0.4 }}>—</em>}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Urgency + Reporting As */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: isMobile ? '0.6rem' : '1rem', marginBottom: description ? (isMobile ? '0.6rem' : '0.85rem') : 0 }}>
+                        <div>
+                          <span style={{ fontSize: isMobile ? '0.65rem' : '0.72rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '2px', fontWeight: 500 }}>Urgency</span>
+                          <span style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '4px',
+                            fontSize: isMobile ? '0.78rem' : '0.88rem', fontWeight: 700,
+                            color: urgency === 'Critical' ? '#ef4444' : urgency === 'Urgent' ? '#f97316' : '#94a3b8'
+                          }}>
+                            <span style={{
+                              width: '6px', height: '6px', borderRadius: '50%', flexShrink: 0,
+                              background: urgency === 'Critical' ? '#ef4444' : urgency === 'Urgent' ? '#f97316' : '#94a3b8',
+                              display: 'inline-block'
+                            }} />
+                            {urgency}
+                          </span>
+                        </div>
+                        <div>
+                          <span style={{ fontSize: isMobile ? '0.65rem' : '0.72rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '2px', fontWeight: 500 }}>Reporting As</span>
+                          <span style={{ fontSize: isMobile ? '0.82rem' : '0.95rem', fontWeight: 600, color: 'var(--text-primary)', wordBreak: 'break-word' }}>
+                            {isAnonymous ? 'Anonymous' : (userName || 'Community Member')}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Description — full width */}
+                      {description && (
+                        <div>
+                          <span style={{ fontSize: isMobile ? '0.65rem' : '0.72rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px', fontWeight: 500 }}>Description</span>
+                          <p style={{
+                            fontSize: isMobile ? '0.8rem' : '0.9rem',
+                            color: 'var(--text-primary)',
+                            lineHeight: '1.5',
+                            margin: 0,
+                            padding: isMobile ? '0.5rem 0.65rem' : '0.6rem 0.75rem',
+                            background: 'var(--bg-primary)',
+                            borderRadius: '8px',
+                            border: '1px solid var(--glass-border)',
+                            wordBreak: 'break-word'
+                          }}>{description}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* ── EVIDENCE ── */}
+                    <div style={{
+                      padding: isMobile ? '0.85rem' : '1.25rem',
+                      borderBottom: '1px solid var(--border)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: isMobile ? '0.65rem' : '0.85rem' }}>
+                        <Camera size={isMobile ? 13 : 14} color="var(--primary)" />
+                        <span style={{ fontSize: isMobile ? '0.65rem' : '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--primary)' }}>Evidence</span>
+                      </div>
+
+                      {/* Photo full-width on mobile, inline on desktop */}
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: isMobile ? 'column' : 'row',
+                        gap: isMobile ? '0.65rem' : '1rem',
+                        alignItems: isMobile ? 'stretch' : 'flex-start'
+                      }}>
+                        {imagePreview ? (
+                          <div style={{ position: 'relative', flexShrink: 0 }}>
+                            <img
+                              src={imagePreview}
+                              alt="Evidence"
+                              style={{
+                                width: isMobile ? '100%' : '130px',
+                                height: isMobile ? '120px' : '100px',
+                                objectFit: 'cover',
+                                borderRadius: '10px',
+                                border: '2px solid var(--primary)',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                display: 'block'
+                              }}
+                            />
+                            <div style={{
+                              position: 'absolute', bottom: '8px', right: '8px',
+                              background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)',
+                              borderRadius: '6px', padding: '2px 7px',
+                              fontSize: '0.6rem', color: 'white', fontWeight: 700,
+                              letterSpacing: '0.5px'
+                            }}>PHOTO</div>
+                          </div>
+                        ) : (
+                          <div style={{
+                            width: isMobile ? '100%' : '130px',
+                            height: isMobile ? '72px' : '100px',
+                            borderRadius: '10px',
+                            border: '2px dashed var(--border)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            color: 'var(--text-secondary)',
+                            fontSize: isMobile ? '0.75rem' : '0.7rem',
+                            background: 'var(--bg-primary)'
+                          }}>No photo</div>
+                        )}
+
+                        {/* Status badges */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', justifyContent: 'center' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{
+                              width: isMobile ? '20px' : '22px', height: isMobile ? '20px' : '22px',
+                              borderRadius: '50%', flexShrink: 0,
+                              background: imagePreview ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.1)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}>
+                              {imagePreview ? <Check size={11} color="#22c55e" /> : <X size={11} color="#ef4444" />}
+                            </div>
+                            <span style={{ fontSize: isMobile ? '0.78rem' : '0.82rem', color: 'var(--text-primary)', fontWeight: 600 }}>
+                              {imagePreview ? '1 photo attached' : 'No photo uploaded'}
+                            </span>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{
+                              width: isMobile ? '20px' : '22px', height: isMobile ? '20px' : '22px',
+                              borderRadius: '50%', flexShrink: 0,
+                              background: audioBlob ? 'rgba(34,197,94,0.15)' : 'rgba(148,163,184,0.1)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}>
+                              {audioBlob ? <Check size={11} color="#22c55e" /> : <Mic size={11} color="#94a3b8" />}
+                            </div>
+                            <span style={{ fontSize: isMobile ? '0.78rem' : '0.82rem', color: 'var(--text-primary)', fontWeight: 600 }}>
+                              {audioBlob ? `Voice note · ${formatDuration(recordingDuration)}` : 'No voice note'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ── LOCATION ── */}
+                    <div style={{ padding: isMobile ? '0.85rem' : '1.25rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: isMobile ? '0.65rem' : '0.85rem' }}>
+                        <MapPin size={isMobile ? 13 : 14} color="var(--primary)" />
+                        <span style={{ fontSize: isMobile ? '0.65rem' : '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--primary)' }}>Location</span>
+                      </div>
+
+                      {location ? (
+                        <div style={{
+                          display: 'flex', alignItems: 'center', gap: '0.65rem',
+                          padding: isMobile ? '0.6rem 0.75rem' : '0.65rem 0.85rem',
+                          background: 'rgba(34,197,94,0.08)',
+                          border: '1px solid rgba(34,197,94,0.2)',
+                          borderRadius: '10px'
+                        }}>
+                          <div style={{
+                            width: isMobile ? '28px' : '32px', height: isMobile ? '28px' : '32px',
+                            borderRadius: '50%', flexShrink: 0,
+                            background: 'rgba(34,197,94,0.15)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                          }}>
+                            <MapPin size={isMobile ? 13 : 16} color="#22c55e" />
+                          </div>
+                          <div style={{ minWidth: 0 }}>
+                            <span style={{ fontSize: isMobile ? '0.65rem' : '0.72rem', color: '#22c55e', fontWeight: 600, display: 'block' }}>Coordinates Captured ✓</span>
+                            <span style={{
+                              fontSize: isMobile ? '0.78rem' : '0.88rem',
+                              color: 'var(--text-primary)', fontWeight: 700,
+                              wordBreak: 'break-all', display: 'block'
+                            }}>
+                              {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{
+                          padding: isMobile ? '0.5rem 0.75rem' : '0.6rem 0.85rem',
+                          background: 'rgba(239,68,68,0.06)',
+                          border: '1px solid rgba(239,68,68,0.2)',
+                          borderRadius: '10px',
+                          fontSize: isMobile ? '0.8rem' : '0.85rem', color: '#ef4444', fontWeight: 600
+                        }}>No location set</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Action buttons — same pattern as steps 1–3 */}
+                  <div style={{ display: 'flex', gap: isMobile ? '0.5rem' : '1rem', marginTop: isMobile ? '0.5rem' : '1rem' }}>
+                    <button
+                      type="button"
+                      disabled={isSubmitting}
+                      onClick={() => {
+                        setDirection(-1);
+                        setStep(3);
+                      }}
+                      className="btn btn-secondary"
+                      style={{ flex: 1, justifyContent: 'center', padding: isMobile ? '0.75rem' : '1rem', fontWeight: 600, fontSize: isMobile ? '0.85rem' : '1rem' }}
+                    >
+                      ← Back
+                    </button>
+                    <button
                       type="submit"
                       disabled={!location || isSubmitting}
                       className="btn btn-primary"
                       style={{ flex: 2, justifyContent: 'center', padding: isMobile ? '0.85rem' : '1.25rem', fontWeight: 700, fontSize: isMobile ? '0.9rem' : '1rem' }}
                     >
-                      {isSubmitting ? <Loader2 size={isMobile ? 18 : 24} className="animate-spin" /> : <Send size={isMobile ? 18 : 24} />}
+                      {isSubmitting ? <Loader2 size={isMobile ? 18 : 24} className="animate-spin" /> : <Send size={isMobile ? 18 : 20} />}
                       <span>{isSubmitting ? 'Submitting...' : 'Submit Report'}</span>
                     </button>
                   </div>
