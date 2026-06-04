@@ -12,6 +12,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
+      manifestFilename: 'app.webmanifest',
       includeAssets: [
         'favicon.svg', 
         'pwa/Cityguard-logo-lightmode.png', 
