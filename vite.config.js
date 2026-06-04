@@ -12,7 +12,13 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      includeAssets: ['favicon.svg', 'pwa/Cityguard-logo-lightmode.png', 'pwa/Cityguard-logo-darkmode.png'],
+      includeAssets: [
+        'favicon.svg', 
+        'pwa/Cityguard-logo-lightmode.png', 
+        'pwa/Cityguard-logo-darkmode.png',
+        'pwa/round logo-darkmode.png',
+        'pwa/round-logo-lightmode.png'
+      ],
       manifest: {
         name: 'City Guard',
         short_name: 'City Guard',
@@ -22,10 +28,22 @@ export default defineConfig({
         display: 'standalone',
         icons: [
           {
-            src: 'pwa/Cityguard-logo-lightmode.png',
+            src: 'pwa/round-logo-lightmode.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any'
+          },
+          {
+            src: 'pwa/round logo-darkmode.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: 'pwa/Cityguard-logo-lightmode.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
           },
           {
             src: 'pwa/Cityguard-logo-darkmode.png',
