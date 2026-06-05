@@ -40,6 +40,11 @@
 - **Framer Motion Animations** — Smooth page transitions, success popups, dropdown reveals
 - **Fully Mobile Optimised** — Responsive across all screens, iOS Safari scroll locks, compact mobile layouts
 
+### 📱 Cross-Platform / Mobile
+- **Native Android Support** — Fully convertible into a native Android `.apk` or `.aab` via Capacitor integration.
+- **App Store Ready** — Codebase can be packaged and uploaded directly to the Google Play Store, Amazon Appstore, or shared via GitHub Releases.
+- **Progressive Web App (PWA)** — Configured with Vite PWA plugin for web installation and offline capabilities.
+
 ---
 
 ## 🛠️ Technology Stack
@@ -132,6 +137,25 @@ npm run dev
 
 - Frontend: `http://localhost:5173`
 - Backend API: `http://localhost:5001`
+
+### 4. Build & Run Android App (Capacitor)
+
+This project is configured to run natively on Android using Capacitor.
+
+```bash
+# 1. Build the production web assets
+npm run build
+
+# 2. Sync web assets with the Android project
+npx cap sync
+
+# 3. Open the Android project in Android Studio
+npx cap open android
+```
+
+Once Android Studio opens, let Gradle sync, then click the **Play/Run** button to launch the app on an emulator or a connected Android device. 
+
+To generate an APK for distribution, use `Build -> Build Bundle(s) / APK(s) -> Build APK(s)` inside the Android Studio menu.
 
 ---
 
