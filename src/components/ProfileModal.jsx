@@ -18,7 +18,12 @@ import {
   AlertCircle,
   Shield,
   Calendar,
-  Sparkles
+  Sparkles,
+  Trash2,
+  ArrowRight,
+  Search,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useRegions } from '../hooks/useRegions';
@@ -41,7 +46,18 @@ const ProfileModal = ({ isOpen, onClose }) => {
   
   // Logout confirmation
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [issueToDelete, setIssueToDelete] = useState(null);
+  const [showAllProblemsModal, setShowAllProblemsModal] = useState(false);
+  const [problemsSortFilter, setProblemsSortFilter] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [toastMessage, setToastMessage] = useState('');
+  const [isDarkMode, setIsDarkMode] = useState(document.documentElement.classList.contains('dark'));
   
+  const toggleTheme = () => {
+    const isDark = document.documentElement.classList.toggle('dark');
+    setIsDarkMode(isDark);
+  };
+
   // Real-time Citizen Stats
   const [stats, setStats] = useState({
     totalReported: 0,
@@ -50,11 +66,13 @@ const ProfileModal = ({ isOpen, onClose }) => {
     upvotes: 0
   });
   const [statsLoading, setStatsLoading] = useState(true);
+  const [userIssues, setUserIssues] = useState([]);
 
   // Initialize and Reset states
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      window.dispatchEvent(new CustomEvent('modal-scroll-lock', { detail: { locked: true } }));
       setRegion(userRegion || '');
       setDisplayName(currentUser?.displayName || currentUser?.email?.split('@')[0] || '');
       setMessage('');
@@ -62,9 +80,11 @@ const ProfileModal = ({ isOpen, onClose }) => {
       setShowLogoutConfirm(false);
     } else {
       document.body.style.overflow = 'unset';
+      window.dispatchEvent(new CustomEvent('modal-scroll-lock', { detail: { locked: false } }));
     }
     return () => {
       document.body.style.overflow = 'unset';
+      window.dispatchEvent(new CustomEvent('modal-scroll-lock', { detail: { locked: false } }));
     };
   }, [isOpen, userRegion, currentUser]);
 
@@ -79,6 +99,7 @@ const ProfileModal = ({ isOpen, onClose }) => {
           if (res.ok) {
             const data = await res.json();
             const myIssues = data.filter(issue => issue.userId === currentUser.uid);
+            setUserIssues(myIssues);
             
             const resolved = myIssues.filter(issue => issue.status === 'Resolved').length;
             const inProgress = myIssues.filter(issue => issue.status === 'In Progress').length;
@@ -168,6 +189,54 @@ const ProfileModal = ({ isOpen, onClose }) => {
     }
   };
 
+  const handleDeleteClick = (issueId) => {
+    setIssueToDelete(issueId);
+  };
+
+  const confirmDeleteIssue = async () => {
+    if (!issueToDelete) return;
+    const issueId = issueToDelete;
+    
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'https://city-guard-backend.onrender.com';
+      const res = await fetch(`${API_URL}/api/issues/${issueId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        // Remove from local state
+        setUserIssues(prev => prev.filter(issue => issue._id !== issueId));
+        
+        // Dispatch global event so IssueFeed updates without refresh
+        window.dispatchEvent(new CustomEvent('issueDeleted', { detail: { issueId } }));
+        
+        // Show success toast
+        setToastMessage('Problem successfully deleted');
+        setTimeout(() => setToastMessage(''), 3000);
+        
+        // Update stats
+        setStats(prev => {
+          const issueToDeleteObj = userIssues.find(i => i._id === issueId);
+          const isResolved = issueToDeleteObj?.status === 'Resolved';
+          const isInProgress = issueToDeleteObj?.status === 'In Progress';
+          const upvotes = Number(issueToDeleteObj?.upvotes) || 0;
+          return {
+            totalReported: prev.totalReported - 1,
+            resolved: isResolved ? prev.resolved - 1 : prev.resolved,
+            inProgress: isInProgress ? prev.inProgress - 1 : prev.inProgress,
+            upvotes: prev.upvotes - upvotes
+          };
+        });
+      } else {
+        alert("Failed to delete the issue.");
+      }
+    } catch (err) {
+      console.error("Error deleting issue:", err);
+      alert("Error deleting the issue.");
+    } finally {
+      setIssueToDelete(null);
+    }
+  };
+
   return createPortal(
     <AnimatePresence>
       {isOpen && (
@@ -196,14 +265,15 @@ const ProfileModal = ({ isOpen, onClose }) => {
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
             className="glass"
             style={{
-              width: '100%',
+              width: 'calc(100% - 2rem)',
               maxWidth: '460px',
               background: 'var(--bg-primary)',
-              padding: '2.25rem',
+              padding: 'min(2.25rem, 6vw)',
               position: 'relative',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
               borderRadius: '28px',
-              overflow: 'hidden'
+              maxHeight: '85vh',
+              overflowY: 'auto'
             }}
             onClick={e => e.stopPropagation()}
           >
@@ -460,6 +530,50 @@ const ProfileModal = ({ isOpen, onClose }) => {
                         leftIcon={MapPin}
                         required
                       />
+                    </div>
+
+                    {/* Dark Mode Toggle */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '12px 14px',
+                      background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '12px',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        {isDarkMode ? <Moon size={18} color="var(--primary)" /> : <Sun size={18} color="var(--primary)" />}
+                        <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--foreground)' }}>
+                          Dark Mode
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={toggleTheme}
+                        style={{
+                          width: '44px',
+                          height: '24px',
+                          background: isDarkMode ? 'var(--primary)' : 'var(--input)',
+                          borderRadius: '12px',
+                          position: 'relative',
+                          border: 'none',
+                          cursor: 'pointer',
+                          transition: 'background 0.3s'
+                        }}
+                      >
+                        <div style={{
+                          width: '20px',
+                          height: '20px',
+                          background: 'white',
+                          borderRadius: '50%',
+                          position: 'absolute',
+                          top: '2px',
+                          left: isDarkMode ? '22px' : '2px',
+                          transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                        }} />
+                      </button>
                     </div>
 
                     {/* Save Button */}
@@ -724,6 +838,81 @@ const ProfileModal = ({ isOpen, onClose }) => {
                             </div>
                           </div>
                         </div>
+
+                        {/* My Posted Problems */}
+                        <div style={{ marginTop: '1.5rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                            <h4 style={{ margin: 0, fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                              My Posted Problems
+                            </h4>
+                            <button 
+                              type="button"
+                              onClick={() => setShowAllProblemsModal(true)}
+                              title="Expand all posted problems"
+                              style={{ 
+                                background: 'rgba(0, 191, 255, 0.1)', 
+                                border: 'none', 
+                                cursor: 'pointer', 
+                                color: '#00bfff', 
+                                padding: '6px',
+                                borderRadius: '8px',
+                                display: 'flex', 
+                                alignItems: 'center',
+                                transition: 'var(--transition-smooth)'
+                              }}
+                              className="glass-hover"
+                            >
+                              <ArrowRight size={16} />
+                            </button>
+                          </div>
+                          {userIssues.length === 0 ? (
+                            <p style={{ fontSize: '0.85rem', color: 'var(--muted-foreground)' }}>You haven't posted any problems yet.</p>
+                          ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '200px', overflowY: 'auto', paddingRight: '5px' }}>
+                              {userIssues.map(issue => (
+                                <div key={issue._id} style={{
+                                  background: 'var(--card)',
+                                  border: '1px solid var(--border)',
+                                  borderRadius: '12px',
+                                  padding: '12px',
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  gap: '10px'
+                                }}>
+                                  <div style={{ overflow: 'hidden' }}>
+                                    <h5 style={{ margin: '0 0 4px 0', fontSize: '0.85rem', fontWeight: 600, color: 'var(--foreground)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                      {issue.issueDescription || issue.category || 'Reported Issue'}
+                                    </h5>
+                                    <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                      Status: <span style={{ color: issue.status === 'Resolved' ? '#22c55e' : (issue.status === 'In Progress' ? '#87ceeb' : (issue.status === 'Pending' ? '#f59e0b' : 'var(--text-secondary)')) }}>{issue.status}</span>
+                                    </p>
+                                  </div>
+                                  <button
+                                    onClick={() => handleDeleteClick(issue._id)}
+                                    title="Delete Issue"
+                                    style={{
+                                      background: 'rgba(239, 68, 68, 0.1)',
+                                      color: '#ef4444',
+                                      border: 'none',
+                                      borderRadius: '8px',
+                                      padding: '8px',
+                                      cursor: 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      transition: 'var(--transition-smooth)'
+                                    }}
+                                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
+                                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </>
                     )}
                   </motion.div>
@@ -888,7 +1077,359 @@ const ProfileModal = ({ isOpen, onClose }) => {
               )}
             </AnimatePresence>
 
+
           </motion.div>
+
+          {/* Show All Problems Big Modal (Absolute Overlay on Viewport) */}
+          <AnimatePresence>
+            {showAllProblemsModal && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: 'rgba(0, 0, 0, 0.75)',
+                  backdropFilter: 'blur(12px)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 200,
+                  padding: '1.5rem'
+                }}
+                onClick={() => setShowAllProblemsModal(false)}
+              >
+                <motion.div
+                  initial={{ scale: 0.9, opacity: 0, y: 10 }}
+                  animate={{ scale: 1, opacity: 1, y: 0 }}
+                  exit={{ scale: 0.9, opacity: 0, y: 10 }}
+                  style={{
+                    background: 'var(--bg-primary)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '20px',
+                    padding: 'min(1.5rem, 4vw)',
+                    width: 'calc(100% - 2rem)',
+                    maxWidth: '600px',
+                    height: '100%',
+                    maxHeight: '85vh',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}
+                  onClick={e => e.stopPropagation()}
+                >
+                  {/* Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <h2 style={{ fontSize: 'clamp(0.95rem, 3vw, 1.25rem)', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--foreground)' }}>
+                      <Activity size={20} color="var(--primary)" /> All Posted Problems
+                    </h2>
+                    <button
+                      type="button"
+                      onClick={() => setShowAllProblemsModal(false)}
+                      style={{
+                        background: 'var(--bg-secondary)',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: 'var(--text-secondary)',
+                        padding: '0.5rem',
+                        borderRadius: '50%',
+                        transition: 'var(--transition-smooth)'
+                      }}
+                      className="glass-hover"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+
+                  {/* Search Bar */}
+                  <div style={{ marginBottom: '1rem', position: 'relative' }}>
+                    <Search size={16} color="var(--text-secondary)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                    <input
+                      type="text"
+                      placeholder="Search problems by description or region..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px 10px 36px',
+                        borderRadius: '12px',
+                        border: '1px solid var(--border)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--foreground)',
+                        fontSize: 'clamp(0.75rem, 2.5vw, 0.85rem)',
+                        outline: 'none',
+                        transition: 'var(--transition-smooth)'
+                      }}
+                      onFocus={e => e.target.style.borderColor = 'var(--primary)'}
+                      onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                    />
+                  </div>
+
+                  {/* Filters */}
+                  <div style={{ display: 'flex', gap: '8px', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                    {['All', 'Pending', 'Resolved', 'In Progress', 'Request Not Fulfilled'].map(filter => (
+                      <button
+                        key={filter}
+                        type="button"
+                        onClick={() => setProblemsSortFilter(filter)}
+                        style={{
+                          padding: 'clamp(4px, 1.5vw, 6px) clamp(6px, 2vw, 12px)',
+                          borderRadius: '20px',
+                          fontSize: 'clamp(0.55rem, 2vw, 0.75rem)',
+                          fontWeight: 700,
+                          border: problemsSortFilter === filter ? '1px solid var(--primary)' : '1px solid var(--border)',
+                          background: problemsSortFilter === filter ? 'rgba(var(--primary-rgb), 0.1)' : 'var(--bg-secondary)',
+                          color: problemsSortFilter === filter ? 'var(--primary)' : 'var(--text-secondary)',
+                          cursor: 'pointer',
+                          transition: 'var(--transition-smooth)'
+                        }}
+                      >
+                        {filter}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Scrollable List */}
+                  <div style={{ flex: 1, overflowY: 'auto', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {userIssues
+                      .filter(issue => problemsSortFilter === 'All' || issue.status === problemsSortFilter)
+                      .filter(issue => {
+                        if (!searchQuery) return true;
+                        const query = searchQuery.toLowerCase();
+                        const desc = (issue.issueDescription || '').toLowerCase();
+                        const cat = (issue.category || '').toLowerCase();
+                        const reg = (issue.region || '').toLowerCase();
+                        return desc.includes(query) || cat.includes(query) || reg.includes(query);
+                      })
+                      .map(issue => (
+                        <div key={issue._id} style={{
+                          background: 'var(--card)',
+                          border: '1px solid var(--border)',
+                          borderRadius: '16px',
+                          padding: '16px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '8px'
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
+                            <h4 style={{ margin: 0, fontSize: 'clamp(0.7rem, 2.5vw, 0.95rem)', fontWeight: 700, color: 'var(--foreground)' }}>
+                              {issue.issueDescription || issue.category || 'Reported Issue'}
+                            </h4>
+                            <span style={{
+                              fontSize: 'clamp(0.5rem, 1.8vw, 0.7rem)',
+                              fontWeight: 800,
+                              padding: 'clamp(2px, 1vw, 4px) clamp(4px, 1.5vw, 8px)',
+                              borderRadius: '12px',
+                              whiteSpace: 'nowrap',
+                              background: issue.status === 'Resolved' ? 'rgba(34, 197, 94, 0.1)' : (issue.status === 'In Progress' ? 'rgba(135, 206, 235, 0.1)' : (issue.status === 'Pending' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(239, 68, 68, 0.1)')),
+                              color: issue.status === 'Resolved' ? '#22c55e' : (issue.status === 'In Progress' ? '#87ceeb' : (issue.status === 'Pending' ? '#f59e0b' : '#ef4444'))
+                            }}>
+                              {issue.status}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: 'clamp(0.55rem, 2vw, 0.75rem)', color: 'var(--text-secondary)', flexWrap: 'wrap' }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <MapPin size={12} /> {issue.region}
+                            </span>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <ThumbsUp size={12} /> {issue.upvotes || 0}
+                            </span>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <Calendar size={12} /> {issue.createdAt ? new Date(issue.createdAt).toLocaleDateString() : 'Unknown'}
+                            </span>
+                          </div>
+                          {/* Image if available */}
+                          {issue.photoUrl && (
+                            <div style={{ marginTop: '8px', borderRadius: '10px', overflow: 'hidden', height: '120px', width: '100%', background: 'var(--bg-secondary)' }}>
+                              <img src={issue.photoUrl} alt="Issue" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+                            </div>
+                          )}
+                          {/* Delete button */}
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px' }}>
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); handleDeleteClick(issue._id); }}
+                              style={{
+                                background: 'rgba(239, 68, 68, 0.1)',
+                                color: '#ef4444',
+                                border: 'none',
+                                borderRadius: '8px',
+                                padding: 'clamp(4px, 1vw, 6px) clamp(6px, 1.5vw, 12px)',
+                                fontSize: 'clamp(0.55rem, 2vw, 0.75rem)',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                transition: 'var(--transition-smooth)'
+                              }}
+                              onMouseEnter={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
+                              onMouseLeave={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
+                            >
+                              <Trash2 size={12} /> Delete
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    }
+                    {userIssues
+                      .filter(issue => problemsSortFilter === 'All' || issue.status === problemsSortFilter)
+                      .filter(issue => {
+                        if (!searchQuery) return true;
+                        const query = searchQuery.toLowerCase();
+                        const desc = (issue.issueDescription || '').toLowerCase();
+                        const cat = (issue.category || '').toLowerCase();
+                        const reg = (issue.region || '').toLowerCase();
+                        return desc.includes(query) || cat.includes(query) || reg.includes(query);
+                      })
+                      .length === 0 && (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, color: 'var(--text-secondary)' }}>
+                        <AlertCircle size={32} style={{ marginBottom: '10px', opacity: 0.5 }} />
+                        <p style={{ margin: 0, fontSize: '0.85rem' }}>No problems found.</p>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Delete Issue Confirmation Dialog (Absolute Overlay on Viewport) */}
+          <AnimatePresence>
+            {issueToDelete && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: 'rgba(0, 0, 0, 0.75)',
+                  backdropFilter: 'blur(8px)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 400,
+                  padding: '2rem'
+                }}
+                onClick={() => setIssueToDelete(null)}
+              >
+                <motion.div
+                  initial={{ scale: 0.9, opacity: 0, y: 10 }}
+                  animate={{ scale: 1, opacity: 1, y: 0 }}
+                  exit={{ scale: 0.9, opacity: 0, y: 10 }}
+                  style={{
+                    background: 'var(--bg-primary)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '20px',
+                    padding: 'clamp(1.25rem, 5vw, 2rem)',
+                    width: '100%',
+                    maxWidth: 'clamp(280px, 85vw, 320px)',
+                    textAlign: 'center',
+                    boxShadow: '0 20px 40px rgba(0,0,0,0.5)'
+                  }}
+                  onClick={e => e.stopPropagation()}
+                >
+                  <div style={{
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    width: '52px',
+                    height: '52px',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 1.25rem',
+                    color: '#ef4444'
+                  }}>
+                    <AlertCircle size={24} />
+                  </div>
+                  <h3 style={{ fontSize: 'clamp(1.1rem, 4.5vw, 1.25rem)', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--foreground)' }}>
+                    Delete Problem
+                  </h3>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: 'clamp(0.8rem, 3.5vw, 0.875rem)', lineHeight: 1.5, marginBottom: '1.5rem' }}>
+                    Are you sure you want to delete this problem? This action cannot be undone.
+                  </p>
+                  <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => setIssueToDelete(null)}
+                      style={{
+                        flex: 1,
+                        padding: 'clamp(0.5rem, 2.5vw, 0.75rem)',
+                        background: 'var(--bg-secondary)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '10px',
+                        fontSize: 'clamp(0.8rem, 3.5vw, 0.875rem)',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        color: 'var(--text-primary)',
+                        transition: 'var(--transition-smooth)'
+                      }}
+                      className="glass-hover"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={confirmDeleteIssue}
+                      style={{
+                        flex: 1,
+                        padding: 'clamp(0.5rem, 2.5vw, 0.75rem)',
+                        background: '#ef4444',
+                        border: 'none',
+                        borderRadius: '10px',
+                        fontSize: 'clamp(0.8rem, 3.5vw, 0.875rem)',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        color: 'white',
+                        transition: 'var(--transition-smooth)',
+                        boxShadow: '0 4px 12px rgba(239, 68, 68, 0.2)'
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = '#dc2626'}
+                      onMouseLeave={e => e.currentTarget.style.background = '#ef4444'}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Toast Notification */}
+          <AnimatePresence>
+            {toastMessage && (
+              <motion.div
+                key="toast"
+                initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 20, scale: 0.9 }}
+                style={{
+                  position: 'absolute',
+                  bottom: '2rem',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  background: 'var(--bg-primary)',
+                  color: 'var(--foreground)',
+                  padding: 'clamp(0.75rem, 3vw, 1rem) clamp(1rem, 4vw, 1.5rem)',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'clamp(0.5rem, 2vw, 0.75rem)',
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+                  border: '1px solid var(--border)',
+                  zIndex: 9999
+                }}
+              >
+                <CheckCircle size={18} color="#22c55e" />
+                <span style={{ fontWeight: 600, fontSize: 'clamp(0.8rem, 3.5vw, 0.9rem)' }}>{toastMessage}</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
         </motion.div>
       )}
     </AnimatePresence>,

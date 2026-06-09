@@ -72,6 +72,15 @@ const IssueFeed = () => {
     return () => clearInterval(interval);
   }, [userRegion]);
 
+  useEffect(() => {
+    const handleIssueDeleted = (e) => {
+      const deletedId = e.detail.issueId;
+      setIssues(prev => prev.filter(issue => issue.id !== deletedId));
+    };
+    window.addEventListener('issueDeleted', handleIssueDeleted);
+    return () => window.removeEventListener('issueDeleted', handleIssueDeleted);
+  }, []);
+
   const activeIssues = issues.filter(i => i.status !== 'resolved' && i.status !== 'request not fulfilled');
   const resolvedIssues = issues.filter(i => i.status === 'resolved' || i.status === 'request not fulfilled');
 

@@ -227,4 +227,21 @@ router.delete('/:id/comments/:commentId', async (req, res) => {
   }
 });
 
+// @route   DELETE /api/issues/:id
+// @desc    Delete an issue
+router.delete('/:id', async (req, res) => {
+  try {
+    const issue = await Issue.findById(req.params.id);
+    if (!issue) {
+      return res.status(404).json({ message: 'Issue not found' });
+    }
+
+    await Issue.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Issue deleted successfully' });
+  } catch (error) {
+    console.error('Delete issue error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 export default router;
