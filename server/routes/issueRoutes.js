@@ -1,9 +1,12 @@
 import express from 'express';
 import multer from 'multer';
+import { EventEmitter } from 'events';
 import Issue from '../models/Issue.js';
 import { cloudinary } from '../config/cloudinary.js';
 
 const router = express.Router();
+export const issueEvents = new EventEmitter();
+issueEvents.setMaxListeners(0); // Allow unlimited listeners for SSE clients
 
 // Use memory storage so we can manually upload each file to Cloudinary
 // with the correct resource_type (image vs video/audio)
@@ -79,6 +82,7 @@ router.post('/', combinedUpload, async (req, res) => {
     });
 
     const savedIssue = await newIssue.save();
+    issueEvents.emit('issueCreated', savedIssue);
     res.status(201).json(savedIssue);
   } catch (error) {
     console.error('Error creating issue:', error);
@@ -100,6 +104,41 @@ router.get('/', async (req, res) => {
   }
 });
 
+// @route   GET /api/issues/stream
+// @desc    SSE endpoint for real-time issue updates
+router.get('/stream', (req, res) => {
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+  });
+
+  // Function to send data to the client
+  const sendEvent = (event, data) => {
+    res.write(`event: ${event}\n`);
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  };
+
+  // Listeners
+  const onIssueCreated = (issue) => sendEvent('issueCreated', issue);
+  const onIssueUpdated = (issue) => sendEvent('issueUpdated', issue);
+  const onIssueDeleted = (issueId) => sendEvent('issueDeleted', { _id: issueId });
+
+  issueEvents.on('issueCreated', onIssueCreated);
+  issueEvents.on('issueUpdated', onIssueUpdated);
+  issueEvents.on('issueDeleted', onIssueDeleted);
+
+  // Send an initial heartbeat to establish connection
+  sendEvent('connected', { message: 'SSE connection established' });
+
+  // Cleanup on client disconnect
+  req.on('close', () => {
+    issueEvents.removeListener('issueCreated', onIssueCreated);
+    issueEvents.removeListener('issueUpdated', onIssueUpdated);
+    issueEvents.removeListener('issueDeleted', onIssueDeleted);
+  });
+});
+
 // @route   PATCH /api/issues/:id/status
 // @desc    Update issue management details (status, assignment, commands)
 router.patch('/:id/status', async (req, res) => {
@@ -118,6 +157,9 @@ router.patch('/:id/status', async (req, res) => {
       updateData,
       { new: true }
     );
+    if (updatedIssue) {
+      issueEvents.emit('issueUpdated', updatedIssue);
+    }
     res.json(updatedIssue);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -158,6 +200,7 @@ router.patch('/:id/vote', async (req, res) => {
     issue.voteScore = issue.upvotes - issue.downvotes;
 
     const savedIssue = await issue.save();
+    issueEvents.emit('issueUpdated', savedIssue);
     res.json(savedIssue);
   } catch (error) {
     console.error('Voting error:', error);
@@ -188,6 +231,7 @@ router.post('/:id/comments', async (req, res) => {
 
     issue.comments.push(newComment);
     const savedIssue = await issue.save();
+    issueEvents.emit('issueUpdated', savedIssue);
     res.status(201).json(savedIssue);
   } catch (error) {
     console.error('Comment error:', error);
@@ -220,6 +264,7 @@ router.delete('/:id/comments/:commentId', async (req, res) => {
 
     issue.comments.splice(commentIndex, 1);
     const savedIssue = await issue.save();
+    issueEvents.emit('issueUpdated', savedIssue);
     res.json(savedIssue);
   } catch (error) {
     console.error('Delete comment error:', error);
@@ -237,6 +282,7 @@ router.delete('/:id', async (req, res) => {
     }
 
     await Issue.findByIdAndDelete(req.params.id);
+    issueEvents.emit('issueDeleted', req.params.id);
     res.json({ message: 'Issue deleted successfully' });
   } catch (error) {
     console.error('Delete issue error:', error);

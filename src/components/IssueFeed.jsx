@@ -68,8 +68,96 @@ const IssueFeed = () => {
 
     setIsLoading(true); // Show loader when region changes
     fetchIssues();
-    const interval = setInterval(fetchIssues, 30000);
-    return () => clearInterval(interval);
+    
+    // Setup SSE for real-time feed updates
+    const API_URL = import.meta.env.VITE_API_URL || 'https://city-guard-backend.onrender.com';
+    const eventSource = new EventSource(`${API_URL}/api/issues/stream`);
+
+    // Helper to transform single issue like fetchIssues does
+    const transformIssue = (issue) => {
+      const desc = issue.issueDescription || '';
+      const parts = desc.includes(': ') ? desc.split(': ') : [desc];
+      const title = parts[0] || 'Reported Issue';
+      const description = parts.slice(1).join(': ') || desc;
+
+      return {
+        id: issue._id,
+        title: title,
+        description: description,
+        issueDescription: issue.issueDescription, // Pass original for components relying on it
+        image: issue.photoUrl,
+        status: (issue.status || 'pending').toLowerCase(),
+        assignedTo: issue.assignedTo,
+        mayorCommands: issue.mayorCommands,
+        voteScore: issue.voteScore || 0,
+        upvotes: issue.upvotes || 0,
+        downvotes: issue.downvotes || 0,
+        voters: issue.voters || [],
+        urgency: issue.urgency || 'Normal',
+        isAnonymous: issue.isAnonymous || false,
+        userName: issue.userName || 'Anonymous citizen',
+        audioUrl: issue.audioUrl || null,
+        location: issue.location?.coordinates?.length >= 2
+          ? `${issue.location.coordinates[1].toFixed(4)}, ${issue.location.coordinates[0].toFixed(4)}`
+          : 'Location Pending',
+        comments: issue.comments || [],
+        time: issue.createdAt
+          ? new Date(issue.createdAt).toLocaleDateString(undefined, {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+          : 'Recently'
+      };
+    };
+
+    eventSource.addEventListener('issueCreated', (e) => {
+      const newIssueRaw = JSON.parse(e.data);
+      // Only add if it belongs to current region (or Universal)
+      if (userRegion !== 'Universal' && newIssueRaw.region !== userRegion) return;
+      
+      const newIssue = transformIssue(newIssueRaw);
+      setIssues(prev => {
+        if (prev.some(issue => issue.id === newIssue.id)) return prev;
+        return [newIssue, ...prev];
+      });
+    });
+
+    eventSource.addEventListener('issueUpdated', (e) => {
+      const updatedIssueRaw = JSON.parse(e.data);
+      // If issue changed region to something else, we might want to remove it, but let's handle simple updates first
+      if (userRegion !== 'Universal' && updatedIssueRaw.region !== userRegion) {
+        setIssues(prev => prev.filter(issue => issue.id !== updatedIssueRaw._id));
+        return;
+      }
+      
+      const updatedIssue = transformIssue(updatedIssueRaw);
+      setIssues(prev => {
+        if (!prev.some(issue => issue.id === updatedIssue.id)) {
+          // If it's a new issue to this feed (e.g. region changed to this one), add it
+          return [updatedIssue, ...prev].sort((a,b) => b.voteScore - a.voteScore || new Date(b.time).getTime() - new Date(a.time).getTime());
+        }
+        return prev.map(issue => issue.id === updatedIssue.id ? updatedIssue : issue);
+      });
+    });
+
+    eventSource.addEventListener('issueDeleted', (e) => {
+      const { _id } = JSON.parse(e.data);
+      setIssues(prev => prev.filter(issue => issue.id !== _id));
+    });
+
+    eventSource.addEventListener('connected', (e) => {
+      console.log('IssueFeed SSE connected:', JSON.parse(e.data).message);
+    });
+
+    eventSource.onerror = (error) => {
+      console.error('IssueFeed SSE connection error:', error);
+    };
+
+    return () => {
+      eventSource.close();
+    };
   }, [userRegion]);
 
   useEffect(() => {

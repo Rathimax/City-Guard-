@@ -34,6 +34,8 @@ const InsightsModal = ({ isOpen, onClose }) => {
       e.preventDefault();
     };
 
+    let eventSource = null;
+
     if (isOpen) {
       const scrollY = window.scrollY;
       document.body.dataset.scrollY = scrollY.toString();
@@ -45,7 +47,55 @@ const InsightsModal = ({ isOpen, onClose }) => {
       document.body.addEventListener('touchmove', preventTouchMove, { passive: false });
       // Signal hero component to pause its scroll listeners
       window.dispatchEvent(new CustomEvent('modal-scroll-lock', { detail: { locked: true } }));
+      
       fetchIssues();
+
+      // Connect to SSE for real-time updates
+      const API_URL = import.meta.env?.VITE_API_URL || 'https://city-guard-backend.onrender.com';
+      eventSource = new EventSource(`${API_URL}/api/issues/stream`);
+
+      eventSource.addEventListener('issueCreated', (e) => {
+        const newIssue = JSON.parse(e.data);
+        setIssues(prev => {
+          // Check if issue already exists to prevent duplicates
+          if (prev.some(issue => issue._id === newIssue._id)) return prev;
+          const updated = [newIssue, ...prev];
+          // We must call calculateStats inside setState or use a separate useEffect depending on `issues`.
+          // Using a separate useEffect is cleaner to avoid stale closures if we aren't careful, 
+          // but we can just use the updater function here and call calculateStats. 
+          // Actually, let's use a separate useEffect to watch `issues` instead to be perfectly safe with React state batches,
+          // OR we can just keep calling it. Let's call it.
+          calculateStats(updated);
+          return updated;
+        });
+      });
+
+      eventSource.addEventListener('issueUpdated', (e) => {
+        const updatedIssue = JSON.parse(e.data);
+        setIssues(prev => {
+          const updated = prev.map(issue => issue._id === updatedIssue._id ? updatedIssue : issue);
+          calculateStats(updated);
+          return updated;
+        });
+      });
+
+      eventSource.addEventListener('issueDeleted', (e) => {
+        const { _id } = JSON.parse(e.data);
+        setIssues(prev => {
+          const updated = prev.filter(issue => issue._id !== _id);
+          calculateStats(updated);
+          return updated;
+        });
+      });
+
+      eventSource.addEventListener('connected', (e) => {
+        console.log('InsightsModal SSE connected:', JSON.parse(e.data).message);
+      });
+
+      eventSource.onerror = (error) => {
+        console.error('InsightsModal SSE connection error:', error);
+      };
+
     } else {
       const scrollY = parseInt(document.body.dataset.scrollY || '0', 10);
       document.body.style.overflow = '';
@@ -57,6 +107,10 @@ const InsightsModal = ({ isOpen, onClose }) => {
       // Signal hero component to resume its scroll listeners
       window.dispatchEvent(new CustomEvent('modal-scroll-lock', { detail: { locked: false } }));
       window.scrollTo(0, scrollY);
+      
+      if (eventSource) {
+        eventSource.close();
+      }
     }
 
     return () => {
@@ -69,6 +123,10 @@ const InsightsModal = ({ isOpen, onClose }) => {
       document.body.removeEventListener('touchmove', preventTouchMove);
       window.dispatchEvent(new CustomEvent('modal-scroll-lock', { detail: { locked: false } }));
       window.scrollTo(0, scrollY);
+      
+      if (eventSource) {
+        eventSource.close();
+      }
     };
   }, [isOpen]);
 
